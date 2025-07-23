@@ -1,0 +1,97 @@
+/* Container for the entire notifications page */
+.notifications-page-container {
+  padding: 2rem;
+  background-color: #f9fafb;
+  min-height: 100vh;
+}
+
+/* Main title of the page */
+.notifications-page-title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 2rem;
+  color: #111827;
+}
+
+/* List container for all notification items */
+.notifications-list-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Individual notification item */
+.notification-item-page {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  border-left: 5px solid #6366f1; /* Accent color for unread */
+}
+
+/* Style for read notifications */
+.notification-item-page.read {
+  background-color: #f3f4f6;
+  border-left-color: #d1d5db; /* Greyed out accent */
+}
+
+.notification-item-page:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Icon container */
+.notification-icon-page {
+  font-size: 1.75rem;
+  color: #6366f1;
+}
+
+.notification-item-page.read .notification-icon-page {
+  color: #6b7280;
+}
+
+/* Content container */
+.notification-content-page {
+  flex-grow: 1;
+}
+
+/* Title of the notification */
+.notification-title-page {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.25rem 0;
+}
+
+/* Message body of the notification */
+.notification-message-page {
+  font-size: 1rem;
+  color: #4b5563;
+  margin: 0;
+}
+
+.notification-item-page.read .notification-title-page,
+.notification-item-page.read .notification-message-page {
+  color: #6b7280;
+}
+
+/* Date of the notification */
+.notification-date-page {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  margin-top: 0.5rem;
+  display: block;
+}
+
+/* Loading container (re-using if defined elsewhere, but good to have) */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50vh;
+  font-size: 1.25rem;
+}

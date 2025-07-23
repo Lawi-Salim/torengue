@@ -1,0 +1,43 @@
+# Node modules
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Fichiers d'environnement
+backend/.env
+frontend/.env
+
+# Dossier/fichiers racine
+.vscode/
+database/
+QUICKSTART.md
+package-lock.json
+
+# Fichiers de configuration sensibles
+backend/package-lock.json
+frontend/package-lock.json
+
+# Fichiers temporaires ou de backup
+*.copy.js
+*copy.js
+*copy.*
+*~ 
+*.log
+
+# Scripts temporaires
+generate-secret.js
+backend/server copy.js
+backend/scripts/reset-app-data.js
+
+# Fichiers SQL de session ou de test
+Nada.session.sql
+db.sql
+models_sequelize_complete.sql
+migration_*.sql
+
+# Uploads temporaires (optionnel, à adapter selon ton usage)
+backend/uploads/produits/
+
+# Autres
+.DS_Store
+Thumbs.db
