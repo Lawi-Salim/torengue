@@ -21,7 +21,15 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const commandesRoutes = require('./routes/commandes');
 const app = express();
 
-app.use(cors());
+const allowedOrigins = [
+  'https://biyashara.hifadhui.site', // Frontend Vercel (prod)
+  'http://localhost:3000'            // Développement local
+];
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(compression());
 app.use(express.json({ limit: '10mb' }));
