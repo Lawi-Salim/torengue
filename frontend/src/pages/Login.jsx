@@ -125,18 +125,87 @@ const Login = () => {
             </button>
           </form>
 
+          {/* Ajout du dropdown-menu pour l'inscription */}
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600">
               Pas encore de compte ?{' '}
-              <Link to="/register" className="text-primary-600 hover:text-primary-700 font-medium">
-                Créer un compte
-              </Link>
-            </p>
+              <DropdownInscriptionLink />
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 };
+
+// Composant DropdownInscription (identique à Home.jsx)
+function DropdownInscription() {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="nav-dropdown" style={{ display: 'inline-block' }}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="btn btn-secondary"
+        type="button"
+      >
+        Créer un compte
+      </button>
+      {isOpen && (
+        <div className="dropdown-menu" style={{ position: 'absolute', right: 0, zIndex: 10 }}>
+          <Link
+            to="/register?role=vendeur"
+            className="dropdown-item"
+            onClick={() => setIsOpen(false)}
+          >
+            En tant que vendeur
+          </Link>
+          <Link
+            to="/register?role=client"
+            className="dropdown-item"
+            onClick={() => setIsOpen(false)}
+          >
+            En tant que client
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Nouveau composant DropdownInscriptionLink
+function DropdownInscriptionLink() {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <span style={{ position: 'relative', display: 'inline-block' }}>
+      <span
+        className="text-primary-600 hover:text-primary-700 font-medium cursor-pointer"
+        onClick={() => setIsOpen((v) => !v)}
+        tabIndex={0}
+        onBlur={() => setTimeout(() => setIsOpen(false), 150)}
+        style={{ cursor: 'pointer' }}
+      >
+        Créer un compte
+      </span>
+      {isOpen && (
+        <div className="dropdown-menu" style={{ position: 'absolute', right: 0, zIndex: 10, minWidth: 180 }}>
+          <Link
+            to="/register?role=vendeur"
+            className="dropdown-item"
+            onClick={() => setIsOpen(false)}
+          >
+            En tant que vendeur
+          </Link>
+          <Link
+            to="/register?role=client"
+            className="dropdown-item"
+            onClick={() => setIsOpen(false)}
+          >
+            En tant que client
+          </Link>
+        </div>
+      )}
+    </span>
+  );
+}
 
 export default Login; 

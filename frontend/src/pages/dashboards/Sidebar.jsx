@@ -42,7 +42,7 @@ const Sidebar = () => {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-title">Gestion Vente</div>
+      <div className="sidebar-title">Biyashara</div>
       <nav>
         <ul className="sidebar-list">
           {links.map((link, i) => (

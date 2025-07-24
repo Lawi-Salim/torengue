@@ -98,7 +98,7 @@ const Headbar = () => {
   return (
     <>
       <header className="headbar">
-      <div className="headbar-title">Gestion Vente</div>
+      <div className="headbar-title">Biyashara</div>
       <div className="actions-user">
         {/* Notifications */}
         <div className="headbar-notification-group" ref={notificationGroupRef}>

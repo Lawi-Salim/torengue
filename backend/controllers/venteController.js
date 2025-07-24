@@ -24,8 +24,16 @@ exports.createVenteFromCommande = async (commande, transaction) => {
 
 // Contrôleur ventes (exemple à compléter)
 
-exports.getAllVentes = (req, res) => {
-  res.json({ success: true, message: 'getAllVentes (à implémenter)' });
+exports.getAllVentes = async (req, res) => {
+  try {
+    const ventes = await Ventes.findAll({
+      attributes: ['id_vente', 'date', 'montant_total'],
+      order: [['date', 'ASC']]
+    });
+    res.json({ success: true, data: ventes });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erreur serveur.' });
+  }
 };
 exports.getVente = (req, res) => {
   res.json({ success: true, message: 'getVente (à implémenter)' });

@@ -3,13 +3,11 @@ import { Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
 import Produits from './pages/Produits';
 import Ventes from './pages/Ventes';
 import ProtectedRoute from './components/ProtectedRoute';
 import ForgotPassword from './pages/ForgotPassword';
 import Home from './pages/Home';
-import Factures from './pages/dashboards/Factures';
 import FactureView from './pages/FactureView';
 
 // Admin
@@ -52,8 +50,6 @@ const AppRoutes = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-
         {/* Routes de l'admin */}
         <Route path="/dashboard/admin" element={<Admin />}>
           <Route index element={<DashboardHome />} />

@@ -41,10 +41,10 @@ const Register = () => {
   }, [location.search, navigate]);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!loading && isAuthenticated) {
       navigate('/dashboard');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, loading, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
