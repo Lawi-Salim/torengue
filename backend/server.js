@@ -65,26 +65,51 @@ app.get('/', (req, res) => {
 
 // Synchroniser les modèles et démarrer le serveur
 const startServer = async () => {
-  try {
-    await sequelize.sync({ alter: true });
-    console.log('✅ Les modèles ont été synchronisés avec la base de données.');
+  const maxRetries = 5;
+  let retryCount = 0;
 
-    app.listen(PORT, () => {
-      const endTime = Date.now();
-      const duration = endTime - startTime;
-      const minutes = Math.floor(duration / 60000);
-      const seconds = ((duration % 60000) / 1000).toFixed(0);
-      const formattedTime = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
-      const now = new Date();
-      const timeString = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const attemptConnection = async () => {
+    try {
+      console.log(`🔄 Tentative de connexion à la base de données (${retryCount + 1}/${maxRetries})...`);
+      
+      // Tester la connexion d'abord
+      await sequelize.authenticate();
+      console.log('✅ Connexion à la base de données établie avec succès.');
+      
+      // Synchroniser les modèles
+      await sequelize.sync({ alter: true });
+      console.log('✅ Les modèles ont été synchronisés avec la base de données.');
 
-      console.log(`✅ Serveur prêt et fonctionnel sur le port ${PORT}`);
-      console.log(`🚀 Démarrage en ${formattedTime} | En cours à ${timeString}`);
-    });
-  } catch (error) {
-    console.error('❌ Impossible de démarrer le serveur:', error);
-    process.exit(1); // Arrêter le processus en cas d'échec de la synchronisation
-  }
+      // Démarrer le serveur
+      app.listen(PORT, () => {
+        const endTime = Date.now();
+        const duration = endTime - startTime;
+        const minutes = Math.floor(duration / 60000);
+        const seconds = ((duration % 60000) / 1000).toFixed(0);
+        const formattedTime = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+        console.log(`✅ Serveur prêt et fonctionnel sur le port ${PORT}`);
+        console.log(`🚀 Démarrage en ${formattedTime} | En cours à ${timeString}`);
+      });
+    } catch (error) {
+      retryCount++;
+      console.error(`❌ Erreur de connexion (tentative ${retryCount}/${maxRetries}):`, error.message);
+      
+      if (retryCount < maxRetries) {
+        const delay = Math.min(1000 * Math.pow(2, retryCount), 30000); // Backoff exponentiel, max 30s
+        console.log(`⏳ Nouvelle tentative dans ${delay/1000} secondes...`);
+        setTimeout(attemptConnection, delay);
+      } else {
+        console.error('❌ Impossible de se connecter à la base de données après plusieurs tentatives.');
+        console.error('Vérifiez vos variables d\'environnement et la connectivité réseau.');
+        process.exit(1);
+      }
+    }
+  };
+
+  await attemptConnection();
 };
 
 startServer();
