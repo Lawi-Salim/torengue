@@ -8,6 +8,7 @@
     "dev": "nodemon server.js",
     "init-db": "node scripts/init-db.js",
     "test-db": "node scripts/test-db-connection.js",
+    "debug-config": "node scripts/debug-config.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

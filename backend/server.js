@@ -72,6 +72,15 @@ const startServer = async () => {
     try {
       console.log(`🔄 Tentative de connexion à la base de données (${retryCount + 1}/${maxRetries})...`);
       
+      // Afficher la configuration (sans le mot de passe)
+      console.log('Configuration DB:', {
+        host: sequelize.config.host,
+        port: sequelize.config.port,
+        database: sequelize.config.database,
+        username: sequelize.config.username,
+        dialect: sequelize.config.dialect
+      });
+      
       // Tester la connexion d'abord
       await sequelize.authenticate();
       console.log('✅ Connexion à la base de données établie avec succès.');
@@ -97,6 +106,16 @@ const startServer = async () => {
       retryCount++;
       console.error(`❌ Erreur de connexion (tentative ${retryCount}/${maxRetries}):`, error.message);
       
+      // Afficher plus de détails sur l'erreur
+      if (error.original) {
+        console.error('Détails de l\'erreur:', {
+          code: error.original.code,
+          errno: error.original.errno,
+          sqlState: error.original.sqlState,
+          sqlMessage: error.original.sqlMessage
+        });
+      }
+      
       if (retryCount < maxRetries) {
         const delay = Math.min(1000 * Math.pow(2, retryCount), 30000); // Backoff exponentiel, max 30s
         console.log(`⏳ Nouvelle tentative dans ${delay/1000} secondes...`);
@@ -104,6 +123,10 @@ const startServer = async () => {
       } else {
         console.error('❌ Impossible de se connecter à la base de données après plusieurs tentatives.');
         console.error('Vérifiez vos variables d\'environnement et la connectivité réseau.');
+        console.error('Suggestions de dépannage :');
+        console.error('1. Vérifiez que DB_HOST, DB_USER, DB_PASSWORD, DB_NAME sont définis');
+        console.error('2. Vérifiez que votre base de données Railway est active');
+        console.error('3. Vérifiez que les informations de connexion sont correctes');
         process.exit(1);
       }
     }
