@@ -179,7 +179,7 @@ const CommandeVendeur = () => {
             {selectedCommande.produits.map((p, index) => (
               <div key={index} className="produit-item-v2">
                 <img 
-                  src={`http://localhost:5000/api/v1/produits/images/${p.image}`} 
+                  src={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/v1/produits/images/${p.image}`} 
                   alt={p.nom} 
                   className="produit-image-v2" 
                 />

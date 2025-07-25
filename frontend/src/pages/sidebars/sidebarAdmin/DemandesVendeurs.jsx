@@ -9,7 +9,7 @@ import {
   getFilteredRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import axios from 'axios';
+import apiService from '../../../apiService';
 import './styleAdmin.css'; 
 import toast from 'react-hot-toast';
 import { FiCheckCircle, FiXCircle } from 'react-icons/fi';
@@ -23,7 +23,7 @@ const DemandesVendeurs = () => {
     setLoading(true);
     const token = localStorage.getItem('token');
     try {
-      const { data } = await axios.get('http://localhost:5000/api/v1/demandes-vendeur', {
+      const { data } = await apiService.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/v1/demandes-vendeur`, {
         headers: { Authorization: `Bearer ${token}` }
       });
                   setDemandes(data.data);
@@ -49,7 +49,7 @@ const DemandesVendeurs = () => {
   const handleApprove = async (id) => {
     const token = localStorage.getItem('token');
     try {
-      await axios.put(`http://localhost:5000/api/v1/demandes-vendeur/${id}/approve`, {}, {
+      await apiService.put(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/v1/demandes-vendeur/${id}/approve`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('Vendeur approuvé avec succès !');
@@ -63,7 +63,7 @@ const DemandesVendeurs = () => {
   const handleReject = async (id) => {
     const token = localStorage.getItem('token');
     try {
-      await axios.put(`http://localhost:5000/api/v1/demandes-vendeur/${id}/reject`, {}, {
+      await apiService.put(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/v1/demandes-vendeur/${id}/reject`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.warn('Demande rejetée.');
@@ -77,7 +77,7 @@ const DemandesVendeurs = () => {
   const columns = useMemo(
     () => [
       { accessorKey: 'nom', header: 'Nom du demandeur' },
-      { accessorKey: 'email', header: 'Email' },
+      { accessorKey: 'email_pro', header: 'Email' },
       { accessorKey: 'nom_boutique', header: 'Nom de la boutique' },
       {
         id: 'actions',

@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
 
-  const API_URL = 'http://localhost:5000';
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
   // Vérifier le token au démarrage
   const fetchNotifications = async () => {

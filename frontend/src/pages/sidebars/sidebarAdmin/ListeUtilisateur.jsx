@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import axios from 'axios';
+import apiService from '../../../apiService';
 import Spinner from '../../../components/Spinner';
 import { FiPlus, FiCheckCircle, FiXCircle, FiArrowLeft, FiArrowRight } from 'react-icons/fi';
 import { 
@@ -20,7 +20,7 @@ const ListeUtilisateur = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/api/v1/users/details', { 
+      const response = await apiService.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/v1/users/details`, { 
         headers: { Authorization: `Bearer ${token}` }
       });
       setUsers(response.data.data || []);
@@ -41,7 +41,7 @@ const ListeUtilisateur = () => {
 
   const handleApprove = async (vendeurId) => {
     try {
-      await axios.put(`http://localhost:5000/api/vendeurs/${vendeurId}/approve`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      await apiService.put(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/vendeurs/${vendeurId}/approve`, {}, { headers: { Authorization: `Bearer ${token}` } });
       toast.success('Vendeur approuvé avec succès !');
       fetchData(); // Recharger les données
     } catch (error) {
@@ -52,7 +52,7 @@ const ListeUtilisateur = () => {
 
   const handleReject = async (vendeurId) => {
     try {
-      await axios.put(`http://localhost:5000/api/vendeurs/${vendeurId}/reject`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      await apiService.put(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/vendeurs/${vendeurId}/reject`, {}, { headers: { Authorization: `Bearer ${token}` } });
       toast.warn('Vendeur rejeté.');
       fetchData(); // Recharger les données
     } catch (error) {

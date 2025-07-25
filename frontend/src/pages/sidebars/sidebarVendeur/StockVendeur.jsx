@@ -7,7 +7,7 @@ import apiService from '../../../apiService';
 import { useAuth } from '../../../context/AuthContext';
 import './styleVendeur.css';
 
-const API_IMAGE_URL = 'http://localhost:5000/api/v1/produits/images/';
+const API_IMAGE_URL = `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/v1/produits/images/`;
 
 const getStockStatus = (stock) => {
   if (stock === 0) return 'rupture';

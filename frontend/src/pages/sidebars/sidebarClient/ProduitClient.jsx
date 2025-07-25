@@ -8,7 +8,7 @@ import { useCart } from '../../../context/CartContext';
 import { toast } from 'react-hot-toast';
 import './styleClient.css';
 
-const API_IMAGE_URL = 'http://localhost:5000/api/v1/produits/images/';
+const API_IMAGE_URL = `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/v1/produits/images/`;
 
 const ProductCard = ({ produit, onViewVendor, onAddToCart }) => {
   const getStockStatus = (stock) => {

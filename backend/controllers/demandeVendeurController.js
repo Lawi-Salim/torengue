@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 // @route   POST /api/devenir-vendeur
 // @access  Public
 exports.createDemande = async (req, res) => {
-  const { nom, email, mot_de_passe, telephone, nom_boutique, nationalite, adresse, description } = req.body;
+  const { nom, email, mot_de_passe, telephone, nom_boutique, nationalite, description } = req.body;
 
   // Validation simple
   if (!nom || !email || !mot_de_passe || !nom_boutique) {
@@ -18,11 +18,10 @@ exports.createDemande = async (req, res) => {
     const demande = await DevenirVendeurs.create({
       nom, // Le nom complet de la personne
       email_pro: email, // L'email qui servira pour le compte
-      password_hash: mot_de_passe, // On stocke le mot de passe brut temporairement pour la future création
+      password: mot_de_passe, // On stocke le mot de passe brut temporairement pour la future création
       telephone,
       nom_boutique,
       nationalite,
-      adresse,
       description,
       statut: 'en_attente' // Statut initial
     });
@@ -99,7 +98,7 @@ exports.approveDemande = async (req, res) => {
       user = await Utilisateurs.create({
         nom: demande.nom,
         email: demande.email_pro,
-        password_hash: demande.password_hash, // On passe le mot de passe brut, le hook du modèle Utilisateurs va le hacher
+        password_hash: demande.password, // On passe le mot de passe brut, le hook du modèle Utilisateurs va le hacher
         telephone: demande.telephone,
         role: 'vendeur'
       }, { transaction: t });
@@ -110,7 +109,6 @@ exports.approveDemande = async (req, res) => {
       id_user: user.id_user,
       nom_boutique: demande.nom_boutique,
       nationalite: demande.nationalite,
-      adresse: demande.adresse,
       description: demande.description,
       statut: 'valide'
     }, { transaction: t });

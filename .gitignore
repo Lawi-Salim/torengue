@@ -12,7 +12,7 @@ frontend/.env
 database/
 QUICKSTART.md
 package-lock.json
-schema.vuerd.json
+lawi/
 
 # Fichiers de configuration sensibles
 backend/package-lock.json

@@ -7,7 +7,7 @@ module.exports = (sequelize, DataTypes) => {
   },
   nom: {
     type: DataTypes.STRING(255),
-    allowNull: false
+    allowNull: true
   },
 
   id_user: {
@@ -26,10 +26,6 @@ module.exports = (sequelize, DataTypes) => {
     type: DataTypes.STRING(255),
     allowNull: false
   },
-  adresse: {
-    type: DataTypes.STRING(255),
-    allowNull: true
-  },
   nationalite: {
     type: DataTypes.STRING(100),
     allowNull: false
@@ -42,9 +38,10 @@ module.exports = (sequelize, DataTypes) => {
     type: DataTypes.TEXT,
     allowNull: true
   },
-  password_hash: {
+  password: {
     type: DataTypes.STRING(255),
-    allowNull: true
+    allowNull: true,
+    defaultValue: 'temporary_password'
   },
   statut: {
     type: DataTypes.ENUM('en_attente', 'valide', 'rejete'),

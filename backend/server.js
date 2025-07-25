@@ -63,21 +63,28 @@ app.get('/', (req, res) => {
 });
 
 
-// On se contente de vérifier la connexion
-sequelize.authenticate()
-  .then(() => console.log('Connexion à la base de données réussie.'))
-  .catch(err => console.error('Impossible de se connecter à la base de données:', err));
+// Synchroniser les modèles et démarrer le serveur
+const startServer = async () => {
+  try {
+    await sequelize.sync({ alter: true });
+    console.log('✅ Les modèles ont été synchronisés avec la base de données.');
 
-app.listen(PORT, () => {
-  const endTime = Date.now();
-    const duration = endTime - startTime;
-    const minutes = Math.floor(duration / 60000);
-    const seconds = ((duration % 60000) / 1000).toFixed(0);
-    const formattedTime = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+    app.listen(PORT, () => {
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      const minutes = Math.floor(duration / 60000);
+      const seconds = ((duration % 60000) / 1000).toFixed(0);
+      const formattedTime = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+      const now = new Date();
+      const timeString = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-  const now = new Date();
-  const timeString = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      console.log(`✅ Serveur prêt et fonctionnel sur le port ${PORT}`);
+      console.log(`🚀 Démarrage en ${formattedTime} | En cours à ${timeString}`);
+    });
+  } catch (error) {
+    console.error('❌ Impossible de démarrer le serveur:', error);
+    process.exit(1); // Arrêter le processus en cas d'échec de la synchronisation
+  }
+};
 
-  console.log(`✅ Serveur prêt et fonctionnel sur le port ${PORT}`);
-  console.log(`🚀 Démarrage en ${formattedTime} | En cours à ${timeString}`);
-});
+startServer();
