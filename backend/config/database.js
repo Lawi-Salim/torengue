@@ -12,14 +12,13 @@ const options = {
   timezone: dbConfig.timezone,
   pool: dbConfig.pool,
   sync: false,
-  dialectOptions: { // Initialisation au bon niveau
-    collate: 'utf8mb4_unicode_ci',
-  },
+  dialectOptions: {},
   define: {
     timestamps: true,
     underscored: false,
     freezeTableName: true,
     charset: 'utf8mb4',
+    collate: 'utf8mb4_unicode_ci' // Remis à la bonne place
   },
 };
 
