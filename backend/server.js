@@ -23,6 +23,7 @@ const app = express();
 
 const allowedOrigins = [
   'https://biyashara.hifadhui.site', // Frontend Vercel (prod)
+  'https://nada.hifadhui.site',      // Nouveau frontend Vercel (prod)
   'http://localhost:3000'            // Développement local
 ];
 
