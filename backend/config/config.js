@@ -27,6 +27,7 @@ module.exports = {
     port: process.env.DB_PORT || 3306,
     dialect: 'mysql',
     logging: false,
+    timezone: '+00:00',
     pool: {
       max: 5,
       min: 0,
