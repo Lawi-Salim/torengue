@@ -9,7 +9,7 @@ module.exports = {
     port: 3306,
     dialect: 'mysql',
     logging: false,
-    timezone: '+01:00'
+    timezone: '+00:00'
   },
   test: {
     username: process.env.DB_USER || 'root',
