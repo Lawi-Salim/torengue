@@ -18,7 +18,7 @@ exports.createDemande = async (req, res) => {
     const demande = await DevenirVendeurs.create({
       nom, // Le nom complet de la personne
       email_pro: email, // L'email qui servira pour le compte
-      password_hash: mot_de_passe, // On stocke le mot de passe brut temporairement pour la future création
+      password: mot_de_passe, // On stocke le mot de passe brut temporairement pour la future création
       telephone,
       nom_boutique,
       nationalite,
