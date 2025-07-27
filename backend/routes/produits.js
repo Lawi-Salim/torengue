@@ -144,6 +144,13 @@ router.post('/', protect, authorize('vendeur', 'admin'), upload.single('image'),
 
     const image = req.file ? req.file.filename : 'default.jpg';
     
+    console.log('=== INFOS FICHIER IMAGE ===');
+    console.log('Fichier reçu:', req.file);
+    console.log('Nom du fichier généré:', image);
+    console.log('Chemin complet du fichier:', req.file ? path.join(__dirname, '../uploads/produits', req.file.filename) : 'Aucun fichier');
+    console.log('URL d\'accès attendue:', `/api/v1/produits/images/${image}`);
+    console.log('=== FIN INFOS FICHIER IMAGE ===');
+    
     console.log('Données du produit à créer:', {
       nom,
       description,
@@ -229,7 +236,28 @@ router.patch('/:id/stock', protect, authorize('vendeur', 'admin'), async (req, r
   }
 });
 
-
+// Route de test pour vérifier les images
+router.get('/test-image/:filename', (req, res) => {
+  const filename = req.params.filename;
+  const imagePath = path.join(__dirname, '../uploads/produits', filename);
+  
+  console.log('=== TEST ACCÈS IMAGE ===');
+  console.log('Fichier demandé:', filename);
+  console.log('Chemin complet:', imagePath);
+  console.log('Fichier existe:', require('fs').existsSync(imagePath));
+  console.log('=== FIN TEST ACCÈS IMAGE ===');
+  
+  if (require('fs').existsSync(imagePath)) {
+    res.sendFile(imagePath);
+  } else {
+    res.status(404).json({ 
+      success: false, 
+      message: 'Image non trouvée',
+      filename,
+      path: imagePath
+    });
+  }
+});
 
 // Route pour récupérer les catégories
 router.get('/categories/list', async (req, res) => {

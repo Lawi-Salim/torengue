@@ -611,7 +611,18 @@ const ProduitVendeur = () => {
                         width: '40px', height: '40px', borderRadius: '6px', overflow: 'hidden', background: 'var(--gray-100)', display: 'flex', alignItems: 'center', justifyContent: 'center'
                       }}>
                         {produit.image ? (
-                          <img src={API_IMAGE_URL + produit.image} alt={produit.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          (() => {
+                            const imageUrl = API_IMAGE_URL + produit.image;
+                            console.log('=== AFFICHAGE IMAGE PRODUIT ===');
+                            console.log('Produit:', produit.nom);
+                            console.log('Image dans DB:', produit.image);
+                            console.log('API_IMAGE_URL:', API_IMAGE_URL);
+                            console.log('URL complète:', imageUrl);
+                            console.log('=== FIN AFFICHAGE IMAGE ===');
+                            return (
+                              <img src={imageUrl} alt={produit.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            );
+                          })()
                         ) : (
                           <FiPackage size={20} color="var(--gray-400)" />
                         )}
