@@ -122,22 +122,38 @@ const ProduitVendeur = () => {
         setImagePreview(reader.result);
       };
       reader.readAsDataURL(file);
+    } else {
+      // Si aucun fichier n'est sélectionné, garder l'image existante
+      if (form.image && typeof form.image === 'string') {
+        // Si c'est une URL d'image existante (pas un fichier)
+        setImagePreview(`${API_IMAGE_URL}${form.image}`);
+      } else {
+        setImagePreview(null);
+      }
     }
   };
 
   const handleEditProduit = (produit) => {
     setForm({
-      nom: produit.nom,
-      description: produit.description,
-      prix_unitaire: produit.prix_unitaire,
-      stock_actuel: produit.stock_actuel,
-      image: produit.image,
-      id_categorie: produit.id_categorie,
-      id_unite: produit.id_unite,
-      seuil_alerte: produit.seuil_alerte,
-      seuil_critique: produit.seuil_critique
+      nom: produit.nom || '',
+      description: produit.description || '',
+      prix_unitaire: produit.prix_unitaire || '',
+      stock_actuel: produit.stock_actuel || '',
+      image: produit.image || null,
+      id_categorie: produit.id_categorie || '',
+      id_unite: produit.id_unite || '',
+      seuil_alerte: produit.seuil_alerte || 10,
+      seuil_critique: produit.seuil_critique || 3
     });
-    setImagePreview(produit.image);
+    
+    // Corriger l'affichage de l'image
+    if (produit.image) {
+      const imageUrl = `${API_IMAGE_URL}${produit.image}`;
+      setImagePreview(imageUrl);
+    } else {
+      setImagePreview(null);
+    }
+    
     setEditProduitId(produit.id_produit);
     setEditMode(true);
     setShowForm(true);

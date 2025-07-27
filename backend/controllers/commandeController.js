@@ -282,40 +282,90 @@ exports.getCommandesVendeur = async (req, res) => {
 exports.updateStatutCommande = async (req, res) => {
   const { id } = req.params;
   const { statut } = req.body;
+  
+  console.log('=== DÉBUT UPDATE STATUT COMMANDE ===');
+  console.log('ID Commande:', id);
+  console.log('Nouveau statut:', statut);
+  console.log('User:', req.user);
+  
   const t = await sequelize.transaction();
   try {
     const commande = await Commandes.findByPk(id, { transaction: t });
+    console.log('Commande trouvée:', commande ? 'OUI' : 'NON');
+    if (commande) {
+      console.log('Commande ID:', commande.id_commande);
+      console.log('Commande Vendeur ID:', commande.id_vendeur);
+      console.log('Commande Statut actuel:', commande.statut);
+    }
+    
     if (!commande) {
       await t.rollback();
+      console.log('❌ Commande non trouvée');
       return res.status(404).json({ success: false, message: 'Commande non trouvée.' });
     }
+
+    // Vérifier que le vendeur connecté est bien le propriétaire de la commande
+    const vendeur = await Vendeurs.findOne({ where: { id_user: req.user.id_user } });
+    console.log('Vendeur trouvé:', vendeur ? 'OUI' : 'NON');
+    if (vendeur) {
+      console.log('Vendeur ID:', vendeur.id_vendeur);
+      console.log('Vendeur User ID:', vendeur.id_user);
+    }
+    
+    if (!vendeur || vendeur.id_vendeur !== commande.id_vendeur) {
+      await t.rollback();
+      console.log('❌ Vendeur non autorisé');
+      return res.status(403).json({ success: false, message: 'Vous n\'êtes pas autorisé à modifier cette commande.' });
+    }
+
     const statutsValides = ['en attente', 'en préparation', 'expédiée', 'livrée', 'annulée', 'validée'];
+    console.log('Statut valide:', statutsValides.includes(statut));
     if (!statutsValides.includes(statut)) {
       await t.rollback();
+      console.log('❌ Statut invalide');
       return res.status(400).json({ success: false, message: 'Statut invalide.' });
     }
+    
+    console.log('Statut actuel de la commande:', commande.statut);
+    console.log('Commande livrée ou annulée:', ['livrée', 'annulée'].includes(commande.statut));
     if (['livrée', 'annulée'].includes(commande.statut)) {
       await t.rollback();
+      console.log('❌ Commande déjà livrée ou annulée');
       return res.status(400).json({ success: false, message: 'Impossible de modifier une commande livrée ou annulée.' });
     }
     
     commande.statut = statut;
     await commande.save({ transaction: t });
+    console.log('✅ Statut mis à jour avec succès');
 
     // Orchestration des créations
     if (statut === 'expédiée' || statut === 'livrée') {
+      console.log('🔄 Création de la livraison...');
       await livraisonController.createLivraisonFromCommande(commande, t);
+      console.log('✅ Livraison créée');
     }
     
     if (statut === 'livrée') {
+      console.log('🔄 Création de la vente...');
       const vente = await venteController.createVenteFromCommande(commande, t);
+      console.log('✅ Vente créée, ID:', vente.id_vente);
+      
+      console.log('🔄 Création de la facture...');
       const facture = await factureController.createFactureFromVente(vente, commande, t);
+      console.log('✅ Facture créée, ID:', facture.id_facture);
+      
+      console.log('🔄 Création du paiement...');
       await paiementController.createPaiementFromFacture(facture, commande, t);
+      console.log('✅ Paiement créé');
+      
       // Mettre à jour la livraison avec l'id_vente
+      console.log('🔄 Mise à jour de la livraison...');
       await livraisonController.updateLivraisonVente(commande.id_commande, vente.id_vente, t);
+      console.log('✅ Livraison mise à jour');
     }
 
     // Notifications
+    console.log('🔄 Création de la notification...');
     let notifMessage = '';
     switch (statut) {
       case 'en préparation':
@@ -335,20 +385,26 @@ exports.updateStatutCommande = async (req, res) => {
     }
     // Trouver le client lié à la commande
     const client = await Clients.findByPk(commande.id_client);
+    console.log('Client trouvé:', client ? 'OUI' : 'NON');
     if (client && client.id_user) {
       await Notifications.create({
         id_user: client.id_user,
         type_notif: 'info',
         message: notifMessage
       }, { transaction: t });
+      console.log('✅ Notification créée pour le client');
     }
     // TODO : Notifier le vendeur si besoin
     
     await t.commit();
+    console.log('✅ Transaction commitée avec succès');
+    console.log('=== FIN UPDATE STATUT COMMANDE ===');
     res.json({ success: true, message: `Statut mis à jour à "${statut}".` });
   } catch (error) {
     await t.rollback();
-    console.error('Erreur lors de la mise à jour du statut:', error);
+    console.error('❌ Erreur lors de la mise à jour du statut:', error);
+    console.error('Stack trace:', error.stack);
+    console.log('=== FIN UPDATE STATUT COMMANDE AVEC ERREUR ===');
     res.status(500).json({ success: false, message: 'Erreur serveur lors de la mise à jour du statut.' });
   }
 };
