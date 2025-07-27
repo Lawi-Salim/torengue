@@ -13,6 +13,8 @@ database/
 QUICKSTART.md
 package-lock.json
 lawi/
+debug-produit-error.sql
+init-railway-data.sql
 
 # Fichiers de configuration sensibles
 backend/package-lock.json

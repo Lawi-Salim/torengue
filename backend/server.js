@@ -19,6 +19,10 @@ const userRoutes = require('./routes/user');
 const vendeurRoutes = require('./routes/vendeurs');
 const notificationRoutes = require('./routes/notificationRoutes');
 const commandesRoutes = require('./routes/commandes');
+
+// Import de l'initialisation des données
+const initRailwayData = require('./scripts/init-railway-data');
+
 const app = express();
 
 const allowedOrigins = [
@@ -68,6 +72,15 @@ const startServer = async () => {
   try {
     await sequelize.sync({ alter: true });
     console.log('✅ Les modèles ont été synchronisés avec la base de données.');
+
+    // Initialiser les données de base (catégories, unités, admin par défaut)
+    try {
+      await initRailwayData();
+      console.log('✅ Données de base initialisées avec succès.');
+    } catch (initError) {
+      console.warn('⚠️ Erreur lors de l\'initialisation des données de base:', initError.message);
+      // Ne pas arrêter le serveur si l'initialisation échoue
+    }
 
     app.listen(PORT, () => {
       const endTime = Date.now();

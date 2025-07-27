@@ -78,27 +78,117 @@ router.route('/:id')
 // Endpoint pour créer un produit avec image
 router.post('/', protect, authorize('vendeur', 'admin'), upload.single('image'), async (req, res) => {
   try {
+    console.log('=== DÉBUT CRÉATION PRODUIT ===');
+    console.log('Body reçu:', req.body);
+    console.log('File reçu:', req.file);
+    console.log('User:', req.user);
+
     const { nom, description, prix_unitaire, stock_actuel, id_categorie, id_unite, seuil_alerte, seuil_critique, id_vendeur } = req.body;
-    if (!nom || !prix_unitaire || !stock_actuel || !id_vendeur) {
-      return res.status(400).json({ success: false, message: 'Champs obligatoires manquants.' });
+    
+    // Validation des champs obligatoires
+    if (!nom || !prix_unitaire || !stock_actuel) {
+      console.log('❌ Champs obligatoires manquants');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Champs obligatoires manquants: nom, prix_unitaire, stock_actuel sont requis.' 
+      });
     }
-    const image = req.file ? req.file.filename : 'default.png';
+
+    // Vérifier si l'utilisateur connecté a un profil vendeur
+    let vendeurId = id_vendeur;
+    if (!vendeurId) {
+      const vendeur = await Vendeurs.findOne({ where: { id_user: req.user.id_user } });
+      if (!vendeur) {
+        console.log('❌ Utilisateur connecté n\'a pas de profil vendeur');
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Vous devez avoir un profil vendeur pour créer des produits.' 
+        });
+      }
+      vendeurId = vendeur.id_vendeur;
+    }
+
+    console.log('Vendeur ID:', vendeurId);
+
+    // Vérifier les clés étrangères si elles sont fournies
+    if (id_categorie) {
+      const categorie = await Categories.findByPk(id_categorie);
+      if (!categorie) {
+        console.log('❌ Catégorie non trouvée:', id_categorie);
+        return res.status(400).json({ 
+          success: false, 
+          message: `Catégorie avec l'ID ${id_categorie} non trouvée.` 
+        });
+      }
+    }
+
+    if (id_unite) {
+      const unite = await Unites.findByPk(id_unite);
+      if (!unite) {
+        console.log('❌ Unité non trouvée:', id_unite);
+        return res.status(400).json({ 
+          success: false, 
+          message: `Unité avec l'ID ${id_unite} non trouvée.` 
+        });
+      }
+    }
+
+    const image = req.file ? req.file.filename : 'default.jpg';
+    
+    console.log('Données du produit à créer:', {
+      nom,
+      description,
+      prix_unitaire,
+      stock_actuel,
+      image,
+      id_categorie: id_categorie || null,
+      id_unite: id_unite || null,
+      seuil_alerte: seuil_alerte || 10,
+      seuil_critique: seuil_critique || 3,
+      id_vendeur: vendeurId
+    });
+
     const produit = await Produits.create({
       nom,
       description,
       prix_unitaire,
       stock_actuel,
       image,
-      id_categorie,
-      id_unite,
+      id_categorie: id_categorie || null,
+      id_unite: id_unite || null,
       seuil_alerte: seuil_alerte || 10,
       seuil_critique: seuil_critique || 3,
-      id_vendeur
+      id_vendeur: vendeurId
     });
+
+    console.log('✅ Produit créé avec succès:', produit.id_produit);
+    console.log('=== FIN CRÉATION PRODUIT ===');
+
     res.status(201).json({ success: true, data: produit });
   } catch (error) {
-    console.error('Erreur création produit:', error);
-    res.status(500).json({ success: false, message: 'Erreur serveur.' });
+    console.error('❌ Erreur création produit:', error);
+    console.error('Stack trace:', error.stack);
+    
+    // Gérer les erreurs spécifiques
+    if (error.name === 'SequelizeForeignKeyConstraintError') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Erreur de clé étrangère. Vérifiez que la catégorie et l\'unité existent.' 
+      });
+    }
+    
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Données invalides: ' + error.message 
+      });
+    }
+
+    res.status(500).json({ 
+      success: false, 
+      message: 'Erreur serveur lors de la création du produit.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
