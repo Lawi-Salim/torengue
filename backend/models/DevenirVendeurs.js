@@ -28,11 +28,11 @@ module.exports = (sequelize, DataTypes) => {
   },
   nationalite: {
     type: DataTypes.STRING(100),
-    allowNull: true // Rendu optionnel
+    allowNull: false
   },
   telephone: {
     type: DataTypes.STRING(20),
-    allowNull: true // Rendu optionnel
+    allowNull: false
   },
   description: {
     type: DataTypes.TEXT,
@@ -65,7 +65,7 @@ module.exports = (sequelize, DataTypes) => {
 });
 
   DevenirVendeurs.associate = (models) => {
-    DevenirVendeurs.belongsTo(models.Utilisateurs, { foreignKey: 'id_user', as: 'user' });
+    DevenirVendeurs.belongsTo(models.Utilisateurs, { foreignKey: 'id_user', as: 'user', onDelete: 'SET NULL' });
   };
 
   return DevenirVendeurs;
