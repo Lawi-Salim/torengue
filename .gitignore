@@ -31,6 +31,7 @@ frontend/package-lock.json
 generate-secret.js
 backend/server copy.js
 backend/scripts/reset-app-data.js
+backend/scripts/debug-commandes.js
 
 # Fichiers SQL de session ou de test
 Nada.session.sql

@@ -346,17 +346,21 @@ exports.updateStatutCommande = async (req, res) => {
       console.log('🔄 Mise à jour du stock...');
       
       try {
-        // Récupérer les détails de la commande
-        const detailsCommande = await DetailCommandes.findAll({
-          where: { id_commande: commande.id_commande },
+        // Récupérer les détails de la commande via la relation
+        const commandeAvecDetails = await Commandes.findByPk(commande.id_commande, {
           include: [{
-            model: Produits,
-            as: 'produit',
-            attributes: ['id_produit', 'stock_actuel', 'nom']
+            model: DetailCommandes,
+            as: 'details',
+            include: [{
+              model: Produits,
+              as: 'produit',
+              attributes: ['id_produit', 'stock_actuel', 'nom']
+            }]
           }],
           transaction: t
         });
 
+        const detailsCommande = commandeAvecDetails.details || [];
         console.log('Détails de la commande:', detailsCommande.length, 'produits');
         console.log('Détails bruts:', JSON.stringify(detailsCommande, null, 2));
 
@@ -402,32 +406,49 @@ exports.updateStatutCommande = async (req, res) => {
     if (statut === 'annulée' && (ancienStatut === 'validée' || ancienStatut === 'en préparation')) {
       console.log('🔄 Remise du stock suite à annulation...');
       
-      // Récupérer les détails de la commande
-      const detailsCommande = await DetailCommandes.findAll({
-        where: { id_commande: commande.id_commande },
-        include: [{
-          model: Produits,
-          as: 'produit',
-          attributes: ['id_produit', 'stock_actuel', 'nom']
-        }],
-        transaction: t
-      });
+      try {
+        // Récupérer les détails de la commande via la relation
+        const commandeAvecDetails = await Commandes.findByPk(commande.id_commande, {
+          include: [{
+            model: DetailCommandes,
+            as: 'details',
+            include: [{
+              model: Produits,
+              as: 'produit',
+              attributes: ['id_produit', 'stock_actuel', 'nom']
+            }]
+          }],
+          transaction: t
+        });
 
-      // Remettre le stock de chaque produit
-      for (const detail of detailsCommande) {
-        const produit = detail.produit;
-        const quantiteCommande = parseInt(detail.quantite);
-        const stockActuel = parseInt(produit.stock_actuel);
+        const detailsCommande = commandeAvecDetails.details || [];
+
+        // Remettre le stock de chaque produit
+        for (const detail of detailsCommande) {
+          console.log('Traitement du détail:', detail.id_detail);
+          console.log('Produit associé:', detail.produit ? 'OUI' : 'NON');
+          
+          if (!detail.produit) {
+            throw new Error(`Produit non trouvé pour le détail de commande ${detail.id_detail}`);
+          }
+          
+          const produit = detail.produit;
+          const quantiteCommande = parseInt(detail.quantite);
+          const stockActuel = parseInt(produit.stock_actuel);
+          
+          console.log(`Produit: ${produit.nom}, Stock actuel: ${stockActuel}, Quantité à remettre: ${quantiteCommande}`);
+          
+          // Incrémenter le stock
+          const nouveauStock = stockActuel + quantiteCommande;
+          await produit.update({ stock_actuel: nouveauStock }, { transaction: t });
+          console.log(`✅ Stock remis pour ${produit.nom}: ${stockActuel} → ${nouveauStock}`);
+        }
         
-        console.log(`Produit: ${produit.nom}, Stock actuel: ${stockActuel}, Quantité à remettre: ${quantiteCommande}`);
-        
-        // Incrémenter le stock
-        const nouveauStock = stockActuel + quantiteCommande;
-        await produit.update({ stock_actuel: nouveauStock }, { transaction: t });
-        console.log(`✅ Stock remis pour ${produit.nom}: ${stockActuel} → ${nouveauStock}`);
+        console.log('✅ Tous les stocks ont été remis');
+      } catch (error) {
+        console.error('❌ Erreur lors de la remise du stock:', error);
+        throw error;
       }
-      
-      console.log('✅ Tous les stocks ont été remis');
     }
 
     // Orchestration des créations

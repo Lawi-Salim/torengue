@@ -41,23 +41,44 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Créer les dossiers nécessaires pour les uploads
 const uploadsDir = path.join(__dirname, 'uploads');
-const produitsUploadsDir = path.join(uploadsDir, 'produits');
+const produitsDir = path.join(__dirname, 'uploads', 'produits');
 
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-  console.log('✅ Dossier uploads créé');
-}
+console.log('=== CRÉATION DES DOSSIERS UPLOAD ===');
+console.log('Dossier uploads:', uploadsDir);
+console.log('Dossier produits:', produitsDir);
 
-if (!fs.existsSync(produitsUploadsDir)) {
-  fs.mkdirSync(produitsUploadsDir, { recursive: true });
-  console.log('✅ Dossier uploads/produits créé');
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('✅ Dossier uploads créé');
+  } else {
+    console.log('✅ Dossier uploads existe déjà');
+  }
+  
+  if (!fs.existsSync(produitsDir)) {
+    fs.mkdirSync(produitsDir, { recursive: true });
+    console.log('✅ Dossier produits créé');
+  } else {
+    console.log('✅ Dossier produits existe déjà');
+  }
+  
+  // Lister les fichiers existants
+  const fichiers = fs.readdirSync(produitsDir);
+  console.log('📁 Fichiers dans uploads/produits:', fichiers);
+} catch (error) {
+  console.error('❌ Erreur lors de la création des dossiers:', error);
 }
+console.log('=== FIN CRÉATION DES DOSSIERS UPLOAD ===');
 
 // Servir les fichiers statiques (images de produits)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Route spécifique pour les images de produits (compatible avec le frontend)
-app.use('/api/v1/produits/images', express.static(path.join(__dirname, 'uploads/produits')));
+app.use('/api/v1/produits/images', (req, res, next) => {
+  console.log('=== ACCÈS IMAGE ===');
+  console.log('URL demandée:', req.url);
+  console.log('Chemin complet:', path.join(__dirname, 'uploads/produits', req.url));
+  console.log('Fichier existe:', fs.existsSync(path.join(__dirname, 'uploads/produits', req.url)));
+  console.log('=== FIN ACCÈS IMAGE ===');
+  next();
+}, express.static(path.join(__dirname, 'uploads/produits')));
 const PORT = process.env.PORT || 5000;
 
 app.use('/api/v1/auth', authRoutes);

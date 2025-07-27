@@ -9,6 +9,21 @@ import './styleVendeur.css';
 
 const API_IMAGE_URL = `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/v1/produits/images/`;
 
+// Fonction pour gérer les erreurs d'images
+const handleImageError = (event) => {
+  console.log('❌ Erreur de chargement image:', event.target.src);
+  event.target.src = '/favicon.png'; // Image par défaut
+  event.target.onerror = null; // Éviter les boucles infinies
+};
+
+// Fonction pour construire l'URL de l'image
+const getImageUrl = (imageName) => {
+  if (!imageName || imageName === 'default.png' || imageName === 'default.jpg') {
+    return '/favicon.png'; // Image par défaut
+  }
+  return API_IMAGE_URL + imageName;
+};
+
 const ProduitVendeur = () => {
   const { user } = useAuth();
   const [search, setSearch] = useState("");
@@ -148,7 +163,7 @@ const ProduitVendeur = () => {
     
     // Corriger l'affichage de l'image
     if (produit.image) {
-      const imageUrl = `${API_IMAGE_URL}${produit.image}`;
+      const imageUrl = getImageUrl(produit.image);
       setImagePreview(imageUrl);
     } else {
       setImagePreview(null);
@@ -507,8 +522,9 @@ const ProduitVendeur = () => {
               }}>
                 {selectedProduit.image ? (
                   <img 
-                    src={API_IMAGE_URL + selectedProduit.image} 
+                    src={getImageUrl(selectedProduit.image)} 
                     alt={selectedProduit.nom}
+                    onError={handleImageError}
                     style={{
                       width: '100%',
                       height: '100%',
@@ -630,7 +646,7 @@ const ProduitVendeur = () => {
                       }}>
                         {produit.image ? (
                           (() => {
-                            const imageUrl = API_IMAGE_URL + produit.image;
+                            const imageUrl = getImageUrl(produit.image);
                             console.log('=== AFFICHAGE IMAGE PRODUIT ===');
                             console.log('Produit:', produit.nom);
                             console.log('Image dans DB:', produit.image);

@@ -9,6 +9,21 @@ import './styleVendeur.css';
 
 const API_IMAGE_URL = `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/v1/produits/images/`;
 
+// Fonction pour gérer les erreurs d'images
+const handleImageError = (event) => {
+  console.log('❌ Erreur de chargement image:', event.target.src);
+  event.target.src = '/favicon.png'; // Image par défaut
+  event.target.onerror = null; // Éviter les boucles infinies
+};
+
+// Fonction pour construire l'URL de l'image
+const getImageUrl = (imageName) => {
+  if (!imageName || imageName === 'default.png' || imageName === 'default.jpg') {
+    return '/favicon.png'; // Image par défaut
+  }
+  return API_IMAGE_URL + imageName;
+};
+
 const getStockStatus = (stock) => {
   if (stock === 0) return 'rupture';
   if (stock >= 1 && stock <= 10) return 'critique';
@@ -199,7 +214,12 @@ const StockVendeur = () => {
                           width: '40px', height: '40px', borderRadius: '6px', overflow: 'hidden', background: 'var(--gray-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--gray-400)'
                         }}>
                           {produit.image && produit.image !== 'default.png' ? (
-                            <img src={API_IMAGE_URL + produit.image} alt={produit.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <img 
+                              src={getImageUrl(produit.image)} 
+                              alt={produit.nom} 
+                              onError={handleImageError}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                            />
                           ) : (
                             <FiPackage size={20} color="var(--gray-400)" />
                           )}
@@ -253,7 +273,12 @@ const StockVendeur = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <div style={{ width: 60, height: 60, borderRadius: 8, overflow: 'hidden', background: 'var(--gray-100)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {selected.image && selected.image !== 'default.png' ? (
-                    <img src={API_IMAGE_URL + selected.image} alt={selected.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img 
+                      src={getImageUrl(selected.image)} 
+                      alt={selected.nom} 
+                      onError={handleImageError}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    />
                   ) : (
                     <FiPackage size={28} color="var(--gray-400)" />
                   )}
