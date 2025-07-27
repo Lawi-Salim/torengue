@@ -12,11 +12,20 @@ const {
 } = require('../controllers/produitsController');
 const { protect, authorize } = require('../middleware/auth');
 const { Produits, Categories, Unites, Vendeurs } = require('../models');
+const fs = require('fs'); // Added for fs.existsSync and fs.mkdirSync
 
 // Multer config pour upload image produit
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '../uploads/produits'));
+    const uploadPath = path.join(__dirname, '../uploads/produits');
+    
+    // Créer le dossier s'il n'existe pas
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+      console.log('✅ Dossier uploads/produits créé dans multer');
+    }
+    
+    cb(null, uploadPath);
   },
   filename: function (req, file, cb) {
     const { nom, id_vendeur } = req.body;
