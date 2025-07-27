@@ -54,8 +54,8 @@ exports.getAllDemandes = async (req, res) => {
     });
     res.status(200).json({ success: true, data: demandes });
   } catch (error) {
-    console.error('Erreur détaillée lors de la récupération des demandes:', JSON.stringify(error, null, 2));
-    res.status(500).json({ success: false, message: 'Erreur serveur.', error: error.message });
+    console.error('Erreur lors de la récupération des demandes:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur.' });
   }
 };
 
