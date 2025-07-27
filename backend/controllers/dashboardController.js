@@ -1,6 +1,6 @@
 // @desc    Récupérer les statistiques pour le tableau de bord
 // @route   GET /api/dashboard/stats
-const { Utilisateurs, Produits, Ventes, Paiements, Factures, Commandes, Clients, Vendeurs, sequelize, Categories, DetailVentes } = require('../models');
+const { Op, Ventes, DetailVentes, DetailCommandes, Produits, Categories, Utilisateurs, Paiements, Factures, Commandes, Clients, Vendeurs, Unites, sequelize } = require('../models');
 
 exports.getAdminStats = async (req, res) => {
   try {
@@ -53,27 +53,46 @@ exports.getClientStats = async (req, res) => {
 // @access  Private/Admin
 exports.getProduitsVendusParCategorie = async (req, res) => {
   try {
-    const results = await DetailVentes.findAll({
-      attributes: [
-        [sequelize.col('produit.categorie.nom'), 'categorie'],
-        [sequelize.fn('SUM', sequelize.col('quantite_vendue')), 'total_vendus']
-      ],
-      include: [{
-        model: Produits,
-        as: 'produit',
-        attributes: [],
+    // Étape 1: Récupérer toutes les catégories
+    const categories = await Categories.findAll();
+
+    // Étape 2: Pour chaque catégorie, calculer le total des ventes
+    const dataPromises = categories.map(async (categorie) => {
+      // Utiliser DetailCommandes au lieu de DetailVentes car DetailVentes est vide
+      const totalVendus = await DetailCommandes.sum('quantite', {
         include: [{
-          model: Categories,
-          as: 'categorie',
+          model: Produits,
+          as: 'produit',
+          where: { id_categorie: categorie.id_categorie },
           attributes: []
         }]
-      }],
-      group: ['produit.categorie.nom'],
-      raw: true
+      });
+
+      // Définir les couleurs pour chaque catégorie
+      const categoryColors = {
+        'Bois': '#8B4513',        // Marron bois
+        'Électricité': '#FFD700',  // Or électrique
+        'Plomberie': '#4169E1',    // Bleu royal
+        'Isolation': '#32CD32',    // Vert lime
+        'Peinture': '#FF6347',     // Rouge tomate
+        'Sécurité': '#FF4500'      // Rouge-orange
+      };
+
+      return {
+        name: categorie.nom,
+        data: totalVendus || 0, // Renvoyer 0 si aucune vente n'a été trouvée
+        color: categoryColors[categorie.nom] || '#808080' // Gris par défaut
+      };
     });
-    res.json({ success: true, data: results });
+
+    // Attendre que tous les calculs soient terminés
+    const formattedData = await Promise.all(dataPromises);
+
+    // Retourner toutes les catégories, même celles sans ventes
+    res.json(formattedData);
+
   } catch (error) {
-    console.error('Erreur lors de l’agrégation des produits vendus par catégorie:', error);
-    res.status(500).json({ success: false, message: 'Erreur serveur.' });
+    console.error('Erreur lors de la récupération des produits par catégorie:', error);
+    res.status(500).json({ message: 'Erreur du serveur', error: error.message });
   }
 };

@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import ProduitsParCategorieChart from '../../../components/charts/ProduitsParCategorieChart';
 import { useAuth } from '../../../context/AuthContext';
 import { FiUsers, FiPackage, FiShoppingCart, FiAlertTriangle, FiPlus, FiDollarSign } from 'react-icons/fi';
 import ReactApexChart from 'react-apexcharts';
@@ -292,10 +293,7 @@ const HomeAdmin = () => {
         <div className="card">
           <ReactApexChart options={ventesData.options} series={ventesData.series} type="line" height={250} />
         </div>
-        {/* Graphique des produits par catégorie */}
-        <div className="card">
-          <ReactApexChart options={productsByCategoryData.options} series={productsByCategoryData.series} type="bar" height={250} />
-        </div>
+        <ProduitsParCategorieChart />
       </div>
 
       <div className="card" style={{ marginTop: '1.5rem' }}>
