@@ -28,11 +28,11 @@ module.exports = (sequelize, DataTypes) => {
   },
   nationalite: {
     type: DataTypes.STRING(100),
-    allowNull: true // Rendu optionnel
+    allowNull: false
   },
   telephone: {
     type: DataTypes.STRING(20),
-    allowNull: true // Rendu optionnel
+    allowNull: false
   },
   description: {
     type: DataTypes.TEXT,
@@ -54,10 +54,6 @@ module.exports = (sequelize, DataTypes) => {
   date_demande: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
-  },
-  traite: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
   }
 }, {
   tableName: 'DevenirVendeurs',

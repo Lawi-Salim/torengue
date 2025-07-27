@@ -95,10 +95,11 @@ exports.approveDemande = async (req, res) => {
       await user.save({ transaction: t });
     } else {
       // L'utilisateur n'existe pas, le créer
+      // Le hook beforeCreate va automatiquement hacher le mot de passe
       user = await Utilisateurs.create({
         nom: demande.nom,
         email: demande.email_pro,
-        password_hash: demande.password, // On passe le mot de passe brut, le hook du modèle Utilisateurs va le hacher
+        password_hash: demande.password, // Le hook va le hacher automatiquement
         telephone: demande.telephone,
         role: 'vendeur'
       }, { transaction: t });
@@ -113,7 +114,7 @@ exports.approveDemande = async (req, res) => {
       statut: 'valide'
     }, { transaction: t });
 
-    // Étape 3: La demande a été traitée, nous pouvons la supprimer de la table temporaire
+    // Étape 3: Supprimer la demande traitée
     await demande.destroy({ transaction: t });
 
     await t.commit(); // Valider la transaction
@@ -137,12 +138,10 @@ exports.rejectDemande = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Demande non trouvée.' });
     }
 
-    // La demande est rejetée, on la supprime de la table temporaire
+    // Supprimer la demande rejetée
     await demande.destroy();
 
-    // Optionnel: Notifier l'utilisateur du rejet
-
-    res.status(200).json({ success: true, message: 'Demande rejetée et supprimée.' });
+    res.status(200).json({ success: true, message: 'Demande rejetée.' });
   } catch (error) {
     console.error('Erreur lors du rejet de la demande:', error);
     res.status(500).json({ success: false, message: 'Erreur serveur.' });
