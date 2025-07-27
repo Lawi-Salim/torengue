@@ -51,7 +51,7 @@ const ProductCard = ({ produit, onViewVendor, onAddToCart }) => {
     <div className="product-card">
       <div className="product-image-container">
         {produit.image ? (
-          <img src={API_IMAGE_URL + produit.image} alt={produit.nom} className="product-image" />
+          <img src={produit.image && produit.image.startsWith('http') ? produit.image : API_IMAGE_URL + produit.image} alt={produit.nom} className="product-image" />
         ) : (
           <div className="product-image-placeholder"><FiPackage size={40} /></div>
         )}
@@ -215,7 +215,7 @@ const ProduitClient = () => {
                   {cartItems.map((item, idx) => (
                     <div key={item.id_produit + '-' + idx} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 18px', borderBottom: idx < cartItems.length-1 ? '1px solid #f0f0f0' : 'none', background: idx%2===0 ? '#fafbfc' : '#fff' }}>
                       <img
-                        src={item.image ? API_IMAGE_URL + item.image : '/default.jpg'}
+                        src={item.image ? (item.image.startsWith('http') ? item.image : API_IMAGE_URL + item.image) : '/default.jpg'}
                         alt={item.nom}
                         style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8, boxShadow: '0 1px 4px #0001' }}
                       />

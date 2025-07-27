@@ -9,6 +9,7 @@
     "init-db": "node scripts/init-db.js",
     "init-railway": "node scripts/init-railway-data.js",
     "debug-commandes": "node scripts/debug-commandes.js",
+    "migrate-images": "node scripts/migrate-images-to-cloudinary.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -21,6 +22,7 @@
   "license": "MIT",
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "cloudinary": "^1.41.3",
     "compression": "^1.8.0",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
@@ -29,6 +31,7 @@
     "helmet": "^7.2.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
+    "multer-storage-cloudinary": "^4.0.0",
     "mysql2": "^3.14.2",
     "sequelize": "^6.37.7"
   },

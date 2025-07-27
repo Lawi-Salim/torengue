@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const path = require('path');
-const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const {
   getAllProduits,
@@ -12,37 +11,7 @@ const {
 } = require('../controllers/produitsController');
 const { protect, authorize } = require('../middleware/auth');
 const { Produits, Categories, Unites, Vendeurs } = require('../models');
-const fs = require('fs'); // Added for fs.existsSync and fs.mkdirSync
-
-// Multer config pour upload image produit
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadPath = path.join(__dirname, '../uploads/produits');
-    
-    // Créer le dossier s'il n'existe pas
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-      console.log('✅ Dossier uploads/produits créé dans multer');
-    }
-    
-    cb(null, uploadPath);
-  },
-  filename: function (req, file, cb) {
-    const { nom, id_vendeur } = req.body;
-    // Si le nom ou l'ID du vendeur n'est pas fourni, on utilise un nom de fichier unique par défaut
-    if (!nom || !id_vendeur) {
-      return cb(null, `${uuidv4()}${path.extname(file.originalname)}`);
-    }
-
-    const ext = path.extname(file.originalname);
-    // On nettoie le nom du produit pour l'utiliser dans le nom de fichier
-    const nomFichier = nom.replace(/\s+/g, '-').toLowerCase();
-    const unique = uuidv4().slice(0, 4); // Ajoute une petite partie unique pour éviter les conflits
-
-    cb(null, `${nomFichier}-${id_vendeur}-${unique}${ext}`);
-  }
-});
-const upload = multer({ storage });
+const { upload } = require('../config/cloudinary');
 
 // Routes publiques
 // La route '/all' doit être déclarée AVANT la route '/:id' pour éviter que 'all' ne soit interprété comme un ID.
@@ -145,13 +114,11 @@ router.post('/', protect, authorize('vendeur'), upload.single('image'), async (r
       });
     }
 
-    const image = req.file ? req.file.filename : 'default.jpg';
-    console.log('=== INFOS FICHIER IMAGE ===');
+    const image = req.file ? req.file.path : null;
+    console.log('=== INFOS FICHIER IMAGE CLOUDINARY ===');
     console.log('Fichier reçu:', req.file);
-    console.log('Nom du fichier généré:', image);
-    console.log('Chemin complet du fichier:', req.file ? path.join(__dirname, '../uploads/produits', req.file.filename) : 'Aucun fichier');
-    console.log('URL d\'accès attendue:', `/api/v1/produits/images/${image}`);
-    console.log('=== FIN INFOS FICHIER IMAGE ===');
+    console.log('URL Cloudinary:', image);
+    console.log('=== FIN INFOS FICHIER IMAGE CLOUDINARY ===');
 
     const produit = await Produits.create({
       nom,
@@ -260,8 +227,8 @@ router.put('/:id', protect, authorize('vendeur'), upload.single('image'), async 
     // Gérer l'image
     let image = produit.image; // Garder l'image existante par défaut
     if (req.file) {
-      image = req.file.filename;
-      console.log('Nouvelle image:', image);
+      image = req.file.path;
+      console.log('Nouvelle image Cloudinary:', image);
     }
 
     // Mettre à jour le produit
@@ -405,27 +372,12 @@ router.patch('/:id/stock', protect, authorize('vendeur', 'admin'), async (req, r
   }
 });
 
-// Route de test pour vérifier les images
+// Route de test pour vérifier les images (maintenant obsolète avec Cloudinary)
 router.get('/test-image/:filename', (req, res) => {
-  const filename = req.params.filename;
-  const imagePath = path.join(__dirname, '../uploads/produits', filename);
-  
-  console.log('=== TEST ACCÈS IMAGE ===');
-  console.log('Fichier demandé:', filename);
-  console.log('Chemin complet:', imagePath);
-  console.log('Fichier existe:', require('fs').existsSync(imagePath));
-  console.log('=== FIN TEST ACCÈS IMAGE ===');
-  
-  if (require('fs').existsSync(imagePath)) {
-    res.sendFile(imagePath);
-  } else {
-    res.status(404).json({ 
-      success: false, 
-      message: 'Image non trouvée',
-      filename,
-      path: imagePath
-    });
-  }
+  res.status(404).json({ 
+    success: false, 
+    message: 'Cette route est obsolète. Les images sont maintenant stockées sur Cloudinary.'
+  });
 });
 
 // Route pour récupérer les catégories

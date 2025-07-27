@@ -17,11 +17,16 @@ const handleImageError = (event) => {
 };
 
 // Fonction pour construire l'URL de l'image
-const getImageUrl = (imageName) => {
-  if (!imageName || imageName === 'default.png' || imageName === 'default.jpg') {
+const getImageUrl = (imageUrl) => {
+  if (!imageUrl || imageUrl === 'default.png' || imageUrl === 'default.jpg') {
     return '/favicon.png'; // Image par défaut
   }
-  return API_IMAGE_URL + imageName;
+  // Si c'est une URL Cloudinary, l'utiliser directement
+  if (imageUrl.startsWith('http')) {
+    return imageUrl;
+  }
+  // Sinon, utiliser l'ancienne méthode (pour compatibilité)
+  return API_IMAGE_URL + imageUrl;
 };
 
 const getStockStatus = (stock) => {

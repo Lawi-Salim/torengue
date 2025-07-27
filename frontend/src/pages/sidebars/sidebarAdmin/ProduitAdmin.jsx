@@ -139,7 +139,7 @@ const ProduitAdmin = () => {
                         width: '40px', height: '40px', borderRadius: '6px', overflow: 'hidden', background: 'var(--gray-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--gray-200)'
                       }}>
                         {produit.image ? (
-                          <img src={API_IMAGE_URL + produit.image} alt={produit.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img src={produit.image && produit.image.startsWith('http') ? produit.image : API_IMAGE_URL + produit.image} alt={produit.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
                           <FiPackage size={20} color="var(--gray-400)" />
                         )}
@@ -201,7 +201,7 @@ const ProduitAdmin = () => {
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
               }}>
                 {selectedProduit.image ? (
-                  <img src={API_IMAGE_URL + selectedProduit.image} alt={selectedProduit.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={selectedProduit.image && selectedProduit.image.startsWith('http') ? selectedProduit.image : API_IMAGE_URL + selectedProduit.image} alt={selectedProduit.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   <FiPackage size={40} color="var(--gray-400)" />
                 )}
