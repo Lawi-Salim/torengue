@@ -11,10 +11,22 @@ const { Vendeurs } = require('../models');
 // Endpoint pour récupérer le vendeur à partir de l'id_user
 router.get('/user/:id_user', async (req, res) => {
   try {
+    console.log('=== RÉCUPÉRATION VENDEUR PAR USER ID ===');
+    console.log('User ID demandé:', req.params.id_user);
+    
     const vendeur = await Vendeurs.findOne({ where: { id_user: req.params.id_user } });
-    if (!vendeur) return res.status(404).json({ success: false, message: 'Vendeur non trouvé.' });
+    
+    console.log('Vendeur trouvé:', vendeur);
+    
+    if (!vendeur) {
+      console.log('❌ Vendeur non trouvé pour user ID:', req.params.id_user);
+      return res.status(404).json({ success: false, message: 'Vendeur non trouvé.' });
+    }
+    
+    console.log('✅ Vendeur trouvé avec ID:', vendeur.id_vendeur);
     res.json({ success: true, data: vendeur });
   } catch (error) {
+    console.error('❌ Erreur lors de la récupération du vendeur:', error);
     res.status(500).json({ success: false, message: 'Erreur serveur.' });
   }
 });

@@ -83,9 +83,29 @@ const ProduitVendeur = () => {
 
   // Récupérer l'id_vendeur à partir de l'id_user
   useEffect(() => {
+    console.log('=== RÉCUPÉRATION VENDEUR ID ===');
+    console.log('User:', user);
+    console.log('User ID:', user?.id_user);
+    
     if (user?.id_user) {
+      console.log('Tentative de récupération du vendeur pour user ID:', user.id_user);
+      
       apiService.get(`/api/v1/vendeurs/user/${user.id_user}`)
-        .then(res => setVendeurId(res.data.data.id_vendeur));
+        .then(res => {
+          console.log('✅ Réponse API vendeur:', res.data);
+          setVendeurId(res.data.data.id_vendeur);
+          console.log('Vendeur ID défini:', res.data.data.id_vendeur);
+        })
+        .catch(error => {
+          console.error('❌ Erreur lors de la récupération du vendeur:', error);
+          console.error('Détails de l\'erreur:', {
+            message: error.message,
+            status: error.response?.status,
+            data: error.response?.data
+          });
+        });
+    } else {
+      console.log('❌ User ID non disponible');
     }
   }, [user]);
 
@@ -125,31 +145,59 @@ const ProduitVendeur = () => {
 
   const handleAddProduit = async (e) => {
     e.preventDefault();
-    if (!form.nom || !form.prix_unitaire || !form.stock_actuel || !vendeurId) return;
+    
+    console.log('=== DÉBUT CRÉATION PRODUIT FRONTEND ===');
+    console.log('Form data:', form);
+    console.log('Vendeur ID:', vendeurId);
+    console.log('Edit mode:', editMode);
+    
+    // Validation des champs
+    if (!form.nom || !form.prix_unitaire || !form.stock_actuel) {
+      console.log('❌ Champs obligatoires manquants');
+      alert('Veuillez remplir tous les champs obligatoires.');
+      return;
+    }
+    
+    if (!vendeurId) {
+      console.log('❌ Vendeur ID manquant');
+      alert('Erreur: ID vendeur non trouvé. Veuillez vous reconnecter.');
+      return;
+    }
     
     const formData = new FormData();
     formData.append('nom', form.nom);
-    formData.append('description', form.description);
+    formData.append('description', form.description || '');
     formData.append('prix_unitaire', form.prix_unitaire);
     formData.append('stock_actuel', form.stock_actuel);
-    formData.append('id_categorie', form.id_categorie);
-    formData.append('id_unite', form.id_unite);
-    formData.append('seuil_alerte', form.seuil_alerte);
-    formData.append('seuil_critique', form.seuil_critique);
+    formData.append('id_categorie', form.id_categorie || '');
+    formData.append('id_unite', form.id_unite || '');
+    formData.append('seuil_alerte', form.seuil_alerte || 10);
+    formData.append('seuil_critique', form.seuil_critique || 3);
     formData.append('id_vendeur', vendeurId);
     if (form.image) formData.append('image', form.image);
     
+    // Afficher le contenu du FormData
+    console.log('FormData contents:');
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}:`, value);
+    }
+    
     try {
       if (editMode) {
-        // Mode édition - mettre à jour le produit
+        console.log('Mode édition - mise à jour du produit');
         await apiService.put(`/api/v1/produits/${editProduitId}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
       } else {
-        // Mode ajout - créer un nouveau produit
-        await apiService.post('/api/v1/produits', formData, {
+        console.log('Mode ajout - création d\'un nouveau produit');
+        console.log('URL:', '/api/v1/produits');
+        console.log('Headers:', { 'Content-Type': 'multipart/form-data' });
+        
+        const response = await apiService.post('/api/v1/produits', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
+        
+        console.log('✅ Réponse du serveur:', response);
       }
       
       setShowForm(false);
@@ -171,10 +219,25 @@ const ProduitVendeur = () => {
       // Rafraîchir la liste
       const res = await apiService.get(`/api/v1/produits/vendeur/${vendeurId}`);
       setProduits(res.data.data || []);
+      
+      console.log('✅ Produit créé/modifié avec succès');
     } catch (error) {
-      console.error('Erreur lors de l\'opération sur le produit:', error);
-      alert(editMode ? 'Erreur lors de la modification du produit.' : 'Erreur lors de l\'ajout du produit.');
+      console.error('❌ Erreur lors de l\'opération sur le produit:', error);
+      console.error('Détails de l\'erreur:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        config: error.config
+      });
+      
+      if (error.response?.data?.message) {
+        alert(`Erreur: ${error.response.data.message}`);
+      } else {
+        alert(editMode ? 'Erreur lors de la modification du produit.' : 'Erreur lors de l\'ajout du produit.');
+      }
     }
+    
+    console.log('=== FIN CRÉATION PRODUIT FRONTEND ===');
   };
 
   const handleViewProduit = (produit) => {
