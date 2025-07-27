@@ -106,7 +106,7 @@ Produits.prototype.updateStock = async function(quantite, operation = 'add') {
     Produits.belongsTo(models.Unites, { foreignKey: 'id_unite', as: 'unite' });
     Produits.belongsTo(models.Vendeurs, { foreignKey: 'id_vendeur', as: 'vendeur' });
     Produits.hasMany(models.DetailVentes, { foreignKey: 'id_produit', as: 'details_ventes' });
-    Produits.hasMany(models.DetailCommandes, { foreignKey: 'id_produit' });
+    Produits.hasMany(models.DetailCommandes, { foreignKey: 'id_produit', as: 'produit' });
   };
 
   return Produits;

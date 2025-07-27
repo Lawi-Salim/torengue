@@ -334,9 +334,101 @@ exports.updateStatutCommande = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Impossible de modifier une commande livrée ou annulée.' });
     }
     
+    // Sauvegarder l'ancien statut pour la comparaison
+    const ancienStatut = commande.statut;
+    
     commande.statut = statut;
     await commande.save({ transaction: t });
     console.log('✅ Statut mis à jour avec succès');
+
+    // Gestion du stock lors de la validation de la commande
+    if (statut === 'validée' || statut === 'en préparation') {
+      console.log('🔄 Mise à jour du stock...');
+      
+      try {
+        // Récupérer les détails de la commande
+        const detailsCommande = await DetailCommandes.findAll({
+          where: { id_commande: commande.id_commande },
+          include: [{
+            model: Produits,
+            as: 'produit',
+            attributes: ['id_produit', 'stock_actuel', 'nom']
+          }],
+          transaction: t
+        });
+
+        console.log('Détails de la commande:', detailsCommande.length, 'produits');
+        console.log('Détails bruts:', JSON.stringify(detailsCommande, null, 2));
+
+        // Mettre à jour le stock de chaque produit
+        for (const detail of detailsCommande) {
+          console.log('Traitement du détail:', detail.id_detail);
+          console.log('Produit associé:', detail.produit ? 'OUI' : 'NON');
+          
+          if (!detail.produit) {
+            throw new Error(`Produit non trouvé pour le détail de commande ${detail.id_detail}`);
+          }
+          
+          const produit = detail.produit;
+          const quantiteCommande = parseInt(detail.quantite);
+          const stockActuel = parseInt(produit.stock_actuel);
+          
+          console.log(`Produit: ${produit.nom}, Stock actuel: ${stockActuel}, Quantité commandée: ${quantiteCommande}`);
+          
+          // Vérifier si le stock est suffisant
+          if (stockActuel < quantiteCommande) {
+            await t.rollback();
+            console.log('❌ Stock insuffisant pour le produit:', produit.nom);
+            return res.status(400).json({
+              success: false,
+              message: `Stock insuffisant pour le produit "${produit.nom}". Stock disponible: ${stockActuel}, Quantité demandée: ${quantiteCommande}`
+            });
+          }
+          
+          // Décrémenter le stock
+          const nouveauStock = stockActuel - quantiteCommande;
+          await produit.update({ stock_actuel: nouveauStock }, { transaction: t });
+          console.log(`✅ Stock mis à jour pour ${produit.nom}: ${stockActuel} → ${nouveauStock}`);
+        }
+        
+        console.log('✅ Tous les stocks ont été mis à jour');
+      } catch (error) {
+        console.error('❌ Erreur lors de la mise à jour du stock:', error);
+        throw error;
+      }
+    }
+
+    // Gestion du stock lors de l'annulation d'une commande (remettre le stock)
+    if (statut === 'annulée' && (ancienStatut === 'validée' || ancienStatut === 'en préparation')) {
+      console.log('🔄 Remise du stock suite à annulation...');
+      
+      // Récupérer les détails de la commande
+      const detailsCommande = await DetailCommandes.findAll({
+        where: { id_commande: commande.id_commande },
+        include: [{
+          model: Produits,
+          as: 'produit',
+          attributes: ['id_produit', 'stock_actuel', 'nom']
+        }],
+        transaction: t
+      });
+
+      // Remettre le stock de chaque produit
+      for (const detail of detailsCommande) {
+        const produit = detail.produit;
+        const quantiteCommande = parseInt(detail.quantite);
+        const stockActuel = parseInt(produit.stock_actuel);
+        
+        console.log(`Produit: ${produit.nom}, Stock actuel: ${stockActuel}, Quantité à remettre: ${quantiteCommande}`);
+        
+        // Incrémenter le stock
+        const nouveauStock = stockActuel + quantiteCommande;
+        await produit.update({ stock_actuel: nouveauStock }, { transaction: t });
+        console.log(`✅ Stock remis pour ${produit.nom}: ${stockActuel} → ${nouveauStock}`);
+      }
+      
+      console.log('✅ Tous les stocks ont été remis');
+    }
 
     // Orchestration des créations
     if (statut === 'expédiée' || statut === 'livrée') {

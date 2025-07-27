@@ -168,9 +168,9 @@ const ProduitVendeur = () => {
     console.log('Edit mode:', editMode);
     
     // Validation des champs
-    if (!form.nom || !form.prix_unitaire || !form.stock_actuel) {
+    if (!form.nom || !form.prix_unitaire || !form.stock_actuel || !form.id_categorie || !form.id_unite) {
       console.log('❌ Champs obligatoires manquants');
-      alert('Veuillez remplir tous les champs obligatoires.');
+      alert('Veuillez remplir tous les champs obligatoires (nom, prix, stock, catégorie et unité).');
       return;
     }
     
@@ -422,8 +422,9 @@ const ProduitVendeur = () => {
                 onChange={handleChange}
                 className="input"
                 style={{ cursor: 'pointer' }}
+                required
               >
-                <option value="">Sélectionner une catégorie</option>
+                <option value="">Sélectionner une catégorie*</option>
                 {categories.map(cat => (
                   <option key={cat.id_categorie} value={cat.id_categorie}>
                     {cat.nom}
@@ -437,8 +438,9 @@ const ProduitVendeur = () => {
                 onChange={handleChange}
                 className="input"
                 style={{ cursor: 'pointer' }}
+                required
               >
-                <option value="">Sélectionner une unité</option>
+                <option value="">Sélectionner une unité*</option>
                 {unites.map(unite => (
                   <option key={unite.id_unite} value={unite.id_unite}>
                     {unite.nom} {unite.symbole ? `(${unite.symbole})` : ''}

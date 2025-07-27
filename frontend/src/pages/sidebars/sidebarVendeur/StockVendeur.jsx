@@ -102,28 +102,63 @@ const StockVendeur = () => {
     const stockValue = Number(newStock);
     let seuilAlerte = Number(newSeuilAlerte);
     let seuilCritique = Number(newSeuilCritique);
-    if (isNaN(stockValue) || isNaN(seuilAlerte) || isNaN(seuilCritique)) {
-      setError('Veuillez saisir des valeurs valides.');
+    
+    // Validation côté client
+    if (isNaN(stockValue) || stockValue < 0) {
+      setError('Le stock doit être un nombre positif.');
       return;
     }
-    if (seuilAlerte < 10) seuilAlerte = 10;
-    if (seuilCritique < 3) seuilCritique = 3;
+    
+    if (isNaN(seuilAlerte) || seuilAlerte < 10) {
+      setError('Le seuil d\'alerte doit être au moins 10.');
+      return;
+    }
+    
+    if (isNaN(seuilCritique) || seuilCritique < 3) {
+      setError('Le seuil critique doit être au moins 3.');
+      return;
+    }
+    
     if (seuilCritique >= seuilAlerte) {
       setError('Le seuil critique doit être inférieur au seuil d\'alerte.');
       return;
     }
+    
     try {
-      await apiService.patch(`/api/v1/produits/${selected.id_produit}/stock`, {
+      console.log('=== DÉBUT MISE À JOUR STOCK ===');
+      console.log('Produit ID:', selected.id_produit);
+      console.log('Nouveau stock:', stockValue);
+      console.log('Nouveau seuil alerte:', seuilAlerte);
+      console.log('Nouveau seuil critique:', seuilCritique);
+      
+      const response = await apiService.patch(`/api/v1/produits/${selected.id_produit}/stock`, {
         stock_actuel: stockValue,
         seuil_alerte: seuilAlerte,
         seuil_critique: seuilCritique
       });
+      
+      console.log('✅ Réponse du serveur:', response.data);
+      
       // Rafraîchir la liste
       const res = await apiService.get(`/api/v1/produits/vendeur/${vendeurId}`);
       setStocks(res.data.data || []);
       setShowModal(false);
+      setError('');
+      
+      console.log('=== FIN MISE À JOUR STOCK ===');
     } catch (error) {
-      setError('Erreur lors de la mise à jour du stock.');
+      console.error('❌ Erreur lors de la mise à jour du stock:', error);
+      console.error('Détails de l\'erreur:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data
+      });
+      
+      if (error.response?.data?.message) {
+        setError(error.response.data.message);
+      } else {
+        setError('Erreur lors de la mise à jour du stock.');
+      }
     }
   };
 
