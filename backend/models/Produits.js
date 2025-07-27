@@ -46,7 +46,7 @@ module.exports = (sequelize, DataTypes) => {
   },
   id_vendeur: {
     type: DataTypes.INTEGER,
-    allowNull: true // Permettre null pour les produits créés par l'admin
+    allowNull: false // Obligatoire car seuls les vendeurs créent des produits
   },
   seuil_alerte: {
     type: DataTypes.INTEGER,

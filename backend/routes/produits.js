@@ -85,7 +85,7 @@ router.route('/:id')
   .get(getProduit);
 
 // Endpoint pour créer un produit avec image
-router.post('/', protect, authorize('vendeur', 'admin'), upload.single('image'), async (req, res) => {
+router.post('/', protect, authorize('vendeur'), upload.single('image'), async (req, res) => {
   try {
     console.log('=== DÉBUT CRÉATION PRODUIT ===');
     console.log('Body reçu:', req.body);
@@ -103,27 +103,26 @@ router.post('/', protect, authorize('vendeur', 'admin'), upload.single('image'),
       });
     }
 
-    // Vérifier si l'utilisateur connecté a un profil vendeur
-    let vendeurId = id_vendeur;
-    if (!vendeurId) {
-      // Si l'utilisateur est admin, on peut créer un produit sans vendeur spécifique
-      if (req.user.role === 'admin') {
-        console.log('✅ Admin créant un produit sans vendeur spécifique');
-        vendeurId = null; // Permettre null pour les produits créés par l'admin
-      } else {
-        // Pour les vendeurs, on doit avoir un profil vendeur
-        const vendeur = await Vendeurs.findOne({ where: { id_user: req.user.id_user } });
-        if (!vendeur) {
-          console.log('❌ Utilisateur connecté n\'a pas de profil vendeur');
-          return res.status(400).json({ 
-            success: false, 
-            message: 'Vous devez avoir un profil vendeur pour créer des produits.' 
-          });
-        }
-        vendeurId = vendeur.id_vendeur;
-      }
+    // Seuls les vendeurs peuvent créer des produits
+    if (req.user.role !== 'vendeur') {
+      console.log('❌ Utilisateur non autorisé à créer des produits');
+      return res.status(403).json({
+        success: false,
+        message: 'Seuls les vendeurs peuvent créer des produits.'
+      });
     }
 
+    // Récupérer l'ID du vendeur connecté
+    const vendeur = await Vendeurs.findOne({ where: { id_user: req.user.id_user } });
+    if (!vendeur) {
+      console.log('❌ Utilisateur connecté n\'a pas de profil vendeur');
+      return res.status(400).json({
+        success: false,
+        message: 'Vous devez avoir un profil vendeur pour créer des produits.'
+      });
+    }
+
+    const vendeurId = vendeur.id_vendeur;
     console.log('Vendeur ID:', vendeurId);
 
     // Vérifier les clés étrangères si elles sont fournies
