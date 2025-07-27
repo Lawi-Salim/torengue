@@ -55,6 +55,9 @@ if (!fs.existsSync(produitsUploadsDir)) {
 
 // Servir les fichiers statiques (images de produits)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Route spécifique pour les images de produits (compatible avec le frontend)
+app.use('/api/v1/produits/images', express.static(path.join(__dirname, 'uploads/produits')));
 const PORT = process.env.PORT || 5000;
 
 app.use('/api/v1/auth', authRoutes);
