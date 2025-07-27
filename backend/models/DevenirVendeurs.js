@@ -52,7 +52,7 @@ module.exports = (sequelize, DataTypes) => {
     allowNull: true
   },
   date_demande: {
-    type: DataTypes.DATE,
+    type: 'DATETIME',
     defaultValue: DataTypes.NOW
   },
   traite: {
