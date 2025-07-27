@@ -101,19 +101,17 @@ const ProduitVendeur = () => {
 
   const handleAddProduit = async (e) => {
     e.preventDefault();
-    if (!form.nom || !form.prix_unitaire || !form.stock_actuel || !vendeurId) return;
+    if (!form.nom || !form.prix_unitaire || !form.stock_actuel) return;
     
     const formData = new FormData();
     formData.append('nom', form.nom);
-    formData.append('description', form.description);
+    formData.append('description', form.description || '');
     formData.append('prix_unitaire', form.prix_unitaire);
     formData.append('stock_actuel', form.stock_actuel);
-    formData.append('id_categorie', form.id_categorie);
-    formData.append('id_unite', form.id_unite);
-    formData.append('seuil_alerte', form.seuil_alerte);
-    formData.append('seuil_critique', form.seuil_critique);
-    // L'id_vendeur n'est plus nécessaire ici pour l'admin, le backend devrait le gérer
-    // formData.append('id_vendeur', vendeurId);
+    formData.append('id_categorie', form.id_categorie || '');
+    formData.append('id_unite', form.id_unite || '');
+    formData.append('seuil_alerte', form.seuil_alerte || 10);
+    formData.append('seuil_critique', form.seuil_critique || 3);
     if (form.image) formData.append('image', form.image);
     
     try {
@@ -146,11 +144,11 @@ const ProduitVendeur = () => {
       setEditProduitId(null);
       
       // Rafraîchir la liste
-      const res = await apiService.get(`/api/v1/produits/vendeur/${vendeurId}`);
+      const res = await apiService.get('/api/v1/produits/all');
       setProduits(res.data.data || []);
     } catch (error) {
       console.error(`Erreur lors de l'opération sur le produit:`, error);
-      alert(`editMode` ? `Erreur lors de la modification du produit.` : `Erreur lors de l'ajout du produit.`);
+      alert(editMode ? `Erreur lors de la modification du produit.` : `Erreur lors de l'ajout du produit.`);
     }
   };
 
