@@ -10,6 +10,8 @@
     "init-railway": "node scripts/init-railway-data.js",
     "debug-commandes": "node scripts/debug-commandes.js",
     "migrate-images": "node scripts/migrate-images-to-cloudinary.js",
+    "test-relations": "node scripts/test-commande-relations.js",
+    "test-production": "node scripts/test-commande-production.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
