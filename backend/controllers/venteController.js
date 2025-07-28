@@ -1,4 +1,4 @@
-const { Ventes, DetailCommandes } = require('../models');
+const { Ventes, DetailCommandes, DetailVentes } = require('../models');
 
 // Fonction pour créer une vente à partir d'une commande
 exports.createVenteFromCommande = async (commande, transaction) => {
@@ -18,6 +18,16 @@ exports.createVenteFromCommande = async (commande, transaction) => {
     montant_total: montantTotal,
     etat_vente: 'livrée'
   }, { transaction });
+
+  // Créer les détails de vente à partir des détails de commande
+  for (const detail of details) {
+    await DetailVentes.create({
+      id_vente: vente.id_vente,
+      id_produit: detail.id_produit,
+      quantite_vendue: detail.quantite,
+      prix_unitaire: detail.prix_unitaire
+    }, { transaction });
+  }
 
   return vente;
 };

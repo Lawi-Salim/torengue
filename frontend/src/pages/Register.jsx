@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { FiUser, FiMail, FiLock, FiPhone, FiEye, FiEyeOff, FiBriefcase, FiGlobe, FiFileText, FiHome } from 'react-icons/fi';
 import apiService from '../apiService';
 import { toast } from 'react-hot-toast';
+import Spinner from '../components/Spinner';
 
 const Register = () => {
   const location = useLocation();
@@ -196,7 +197,14 @@ const Register = () => {
                   )}
 
               <button type="submit" disabled={loading} className="btn btn-primary w-full mt-6">
-                {loading ? 'Inscription en cours...' : 'Créer mon compte'}
+                {loading ? (
+                  <>
+                    <Spinner size={20} inline={true} />
+                    <span style={{ marginLeft: '8px' }}>Inscription en cours...</span>
+                  </>
+                ) : (
+                  'Créer mon compte'
+                )}
               </button>
             </form>
           </div>

@@ -192,6 +192,7 @@ const ProduitClient = () => {
         )}
       </div>
 
+      {/* Modal Vendeur favoris */}
       {showVendorModal && selectedVendor && (
         <Modal open={showVendorModal} onClose={() => setShowVendorModal(false)} title={`Détails du vendeur`}>
             <div className="vendor-modal-content">

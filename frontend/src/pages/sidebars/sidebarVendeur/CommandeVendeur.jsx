@@ -168,6 +168,7 @@ const CommandeVendeur = () => {
         )}
       </div>
 
+      {/* Modal de validation d'une commande */}
       {selectedCommande && (
         <Modal
           open={isModalOpen}
@@ -179,9 +180,12 @@ const CommandeVendeur = () => {
             {selectedCommande.produits.map((p, index) => (
               <div key={index} className="produit-item-v2">
                 <img 
-                  src={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/v1/produits/images/${p.image}`} 
+                  src={p.image || '/placeholder-image.png'} 
                   alt={p.nom} 
                   className="produit-image-v2" 
+                  onError={(e) => {
+                    e.target.src = '/placeholder-image.png';
+                  }}
                 />
                 <div className="produit-info-v2" style={{ width: '9rem' }}>
                   <span className="produit-nom-v2">{p.nom}</span>

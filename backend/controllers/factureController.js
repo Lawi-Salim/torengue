@@ -102,7 +102,7 @@ exports.getFactureDetails = async (req, res) => {
               include: [{
                 model: Produits,
                 as: 'produit',
-                attributes: [['nom', 'nom_produit'], 'prix_unitaire'] 
+                attributes: ['nom', 'prix_unitaire'] 
               }],
               attributes: ['id_vente', 'id_produit', 'quantite_vendue', 'prix_unitaire'],
             }

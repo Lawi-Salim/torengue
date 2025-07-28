@@ -46,16 +46,33 @@ exports.getLivraisonsVendeur = async (req, res) => {
         model: Commandes,
         as: 'commande',
         where: { id_vendeur: vendeur.id_vendeur },
-        include: [{
-          model: Clients,
-          as: 'client',
-          include: [{
-            model: Utilisateurs,
-            as: 'user',
-            attributes: ['nom']
-          }]
-        }]
-      }]
+        include: [
+          {
+            model: Clients,
+            as: 'client',
+            attributes: ['id_client', 'adresse_facturation', 'id_user'],
+            include: [
+              {
+                model: Utilisateurs,
+                as: 'user',
+                attributes: ['nom', 'email', 'telephone']
+              }
+            ]
+          },
+          {
+            model: Vendeurs,
+            as: 'vendeur',
+            include: [
+              {
+                model: Utilisateurs,
+                as: 'user',
+                attributes: ['nom', 'email', 'telephone']
+              }
+            ]
+          }
+        ]
+      }],
+      order: [['date_livraison', 'DESC']]
     });
     res.json({ success: true, data: livraisons });
   } catch (error) {

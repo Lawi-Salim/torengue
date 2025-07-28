@@ -30,7 +30,7 @@ const FactureView = () => {
   const client = vente.client || {};
   const vendeur = vente.vendeur || {};
   const lignes = (vente.details || []).map(d => ({
-    desc: d.produit?.nom_produit || d.produit?.nom || 'Produit',
+    desc: d.produit?.nom || 'Produit',
     pu: `${d.prix_unitaire} KMF`,
     qte: d.quantite_vendue,
     total: `${(d.prix_unitaire * d.quantite_vendue).toFixed(2)} KMF`

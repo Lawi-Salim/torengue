@@ -12,9 +12,6 @@ module.exports = (sequelize, DataTypes) => {
     type: DataTypes.ENUM('en préparation', 'en cours', 'livrée'),
     defaultValue: 'en préparation'
   },
-  adresse: {
-    type: DataTypes.TEXT
-  },
   id_vente: {
     type: DataTypes.INTEGER,
     allowNull: true,

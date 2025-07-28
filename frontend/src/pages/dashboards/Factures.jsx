@@ -16,7 +16,7 @@ const Factures = React.forwardRef(function Factures(props, ref) {
   return (
   <div className="facture-apercu" ref={ref}>
     <div className="facture-header">
-      <div className="facture-logo">Torengue</div>
+      <div className="facture-logo">Biyashara</div>
       <div className="facture-meta">
         <div><strong>DATE :</strong> {date}</div>
         <div><strong>ÉCHÉANCE :</strong> {echeance}</div>

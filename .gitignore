@@ -15,6 +15,7 @@ package-lock.json
 lawi/
 debug-produit-error.sql
 init-railway-data.sql
+lawi.sql
 
 # Fichiers de configuration sensibles
 backend/package-lock.json

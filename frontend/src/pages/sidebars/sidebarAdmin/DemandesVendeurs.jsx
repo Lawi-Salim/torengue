@@ -76,7 +76,7 @@ const DemandesVendeurs = () => {
 
   const columns = useMemo(
     () => [
-      { accessorKey: 'nom', header: 'Nom du demandeur' },
+      { accessorKey: 'nom', header: 'Nom' },
       { accessorKey: 'email_pro', header: 'Email' },
       { accessorKey: 'nom_boutique', header: 'Nom de la boutique' },
       {

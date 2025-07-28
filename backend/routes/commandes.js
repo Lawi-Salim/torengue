@@ -17,21 +17,10 @@ router.put('/:id/valider', protect, authorize('vendeur'), validerCommande);
 
 // Route pour mettre à jour le statut d'une commande
 router.put('/:id/statut', protect, authorize('vendeur'), async (req, res, next) => {
-  console.log('=== DÉBUT ROUTE UPDATE STATUT ===');
-  console.log('URL:', req.url);
-  console.log('Method:', req.method);
-  console.log('Params:', req.params);
-  console.log('Body:', req.body);
-  console.log('User:', req.user);
-  console.log('User ID:', req.user?.id_user);
-  console.log('User Role:', req.user?.role);
-  console.log('=== FIN ROUTE UPDATE STATUT ===');
-  
   try {
     await commandeController.updateStatutCommande(req, res);
   } catch (error) {
     console.error('❌ Erreur dans la route updateStatut:', error);
-    console.error('Stack trace:', error.stack);
     next(error);
   }
 });

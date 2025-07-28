@@ -106,6 +106,28 @@ exports.getMesCommandes = async (req, res) => {
               attributes: ['nom', 'prix_unitaire']
             }
           ]
+        },
+        {
+          model: Vendeurs,
+          as: 'vendeur',
+          include: [
+            {
+              model: Utilisateurs,
+              as: 'user',
+              attributes: ['nom', 'email', 'telephone']
+            }
+          ]
+        },
+        {
+          model: Clients,
+          as: 'client',
+          include: [
+            {
+              model: Utilisateurs,
+              as: 'user',
+              attributes: ['nom', 'email', 'telephone']
+            }
+          ]
         }
       ]
     });
@@ -125,8 +147,11 @@ exports.getMesCommandes = async (req, res) => {
         montant_total: montantTotal.toFixed(2),
         produits: (cmd.details || []).map(d => ({
           nom: d.produit?.nom || 'Produit non trouvé',
-          quantite: d.quantite
-        }))
+          quantite: d.quantite,
+          prix_unitaire: d.prix_unitaire
+        })),
+        vendeur: cmd.vendeur,
+        client: cmd.client
       }
     });
 
@@ -283,54 +308,31 @@ exports.updateStatutCommande = async (req, res) => {
   const { id } = req.params;
   const { statut } = req.body;
   
-  console.log('=== DÉBUT UPDATE STATUT COMMANDE ===');
-  console.log('ID Commande:', id);
-  console.log('Nouveau statut:', statut);
-  console.log('User:', req.user);
-  
   const t = await sequelize.transaction();
   try {
     const commande = await Commandes.findByPk(id, { transaction: t });
-    console.log('Commande trouvée:', commande ? 'OUI' : 'NON');
-    if (commande) {
-      console.log('Commande ID:', commande.id_commande);
-      console.log('Commande Vendeur ID:', commande.id_vendeur);
-      console.log('Commande Statut actuel:', commande.statut);
-    }
     
     if (!commande) {
       await t.rollback();
-      console.log('❌ Commande non trouvée');
       return res.status(404).json({ success: false, message: 'Commande non trouvée.' });
     }
 
     // Vérifier que le vendeur connecté est bien le propriétaire de la commande
     const vendeur = await Vendeurs.findOne({ where: { id_user: req.user.id_user } });
-    console.log('Vendeur trouvé:', vendeur ? 'OUI' : 'NON');
-    if (vendeur) {
-      console.log('Vendeur ID:', vendeur.id_vendeur);
-      console.log('Vendeur User ID:', vendeur.id_user);
-    }
     
     if (!vendeur || vendeur.id_vendeur !== commande.id_vendeur) {
       await t.rollback();
-      console.log('❌ Vendeur non autorisé');
       return res.status(403).json({ success: false, message: 'Vous n\'êtes pas autorisé à modifier cette commande.' });
     }
 
     const statutsValides = ['en attente', 'en préparation', 'expédiée', 'livrée', 'annulée', 'validée'];
-    console.log('Statut valide:', statutsValides.includes(statut));
     if (!statutsValides.includes(statut)) {
       await t.rollback();
-      console.log('❌ Statut invalide');
       return res.status(400).json({ success: false, message: 'Statut invalide.' });
     }
     
-    console.log('Statut actuel de la commande:', commande.statut);
-    console.log('Commande livrée ou annulée:', ['livrée', 'annulée'].includes(commande.statut));
     if (['livrée', 'annulée'].includes(commande.statut)) {
       await t.rollback();
-      console.log('❌ Commande déjà livrée ou annulée');
       return res.status(400).json({ success: false, message: 'Impossible de modifier une commande livrée ou annulée.' });
     }
     
@@ -339,12 +341,9 @@ exports.updateStatutCommande = async (req, res) => {
     
     commande.statut = statut;
     await commande.save({ transaction: t });
-    console.log('✅ Statut mis à jour avec succès');
 
     // Gestion du stock lors de la validation de la commande
     if (statut === 'validée' || statut === 'en préparation') {
-      console.log('🔄 Mise à jour du stock...');
-      
       try {
         // Récupérer les détails de la commande via la relation
         const commandeAvecDetails = await Commandes.findByPk(commande.id_commande, {
@@ -361,14 +360,9 @@ exports.updateStatutCommande = async (req, res) => {
         });
 
         const detailsCommande = commandeAvecDetails.details || [];
-        console.log('Détails de la commande:', detailsCommande.length, 'produits');
-        console.log('Détails bruts:', JSON.stringify(detailsCommande, null, 2));
 
         // Mettre à jour le stock de chaque produit
         for (const detail of detailsCommande) {
-          console.log('Traitement du détail:', detail.id_detail);
-          console.log('Produit associé:', detail.produit ? 'OUI' : 'NON');
-          
           if (!detail.produit) {
             throw new Error(`Produit non trouvé pour le détail de commande ${detail.id_detail}`);
           }
@@ -377,12 +371,9 @@ exports.updateStatutCommande = async (req, res) => {
           const quantiteCommande = parseInt(detail.quantite);
           const stockActuel = parseInt(produit.stock_actuel);
           
-          console.log(`Produit: ${produit.nom}, Stock actuel: ${stockActuel}, Quantité commandée: ${quantiteCommande}`);
-          
           // Vérifier si le stock est suffisant
           if (stockActuel < quantiteCommande) {
             await t.rollback();
-            console.log('❌ Stock insuffisant pour le produit:', produit.nom);
             return res.status(400).json({
               success: false,
               message: `Stock insuffisant pour le produit "${produit.nom}". Stock disponible: ${stockActuel}, Quantité demandée: ${quantiteCommande}`
@@ -392,10 +383,7 @@ exports.updateStatutCommande = async (req, res) => {
           // Décrémenter le stock
           const nouveauStock = stockActuel - quantiteCommande;
           await produit.update({ stock_actuel: nouveauStock }, { transaction: t });
-          console.log(`✅ Stock mis à jour pour ${produit.nom}: ${stockActuel} → ${nouveauStock}`);
         }
-        
-        console.log('✅ Tous les stocks ont été mis à jour');
       } catch (error) {
         console.error('❌ Erreur lors de la mise à jour du stock:', error);
         throw error;
@@ -404,8 +392,6 @@ exports.updateStatutCommande = async (req, res) => {
 
     // Gestion du stock lors de l'annulation d'une commande (remettre le stock)
     if (statut === 'annulée' && (ancienStatut === 'validée' || ancienStatut === 'en préparation')) {
-      console.log('🔄 Remise du stock suite à annulation...');
-      
       try {
         // Récupérer les détails de la commande via la relation
         const commandeAvecDetails = await Commandes.findByPk(commande.id_commande, {
@@ -425,9 +411,6 @@ exports.updateStatutCommande = async (req, res) => {
 
         // Remettre le stock de chaque produit
         for (const detail of detailsCommande) {
-          console.log('Traitement du détail:', detail.id_detail);
-          console.log('Produit associé:', detail.produit ? 'OUI' : 'NON');
-          
           if (!detail.produit) {
             throw new Error(`Produit non trouvé pour le détail de commande ${detail.id_detail}`);
           }
@@ -436,15 +419,10 @@ exports.updateStatutCommande = async (req, res) => {
           const quantiteCommande = parseInt(detail.quantite);
           const stockActuel = parseInt(produit.stock_actuel);
           
-          console.log(`Produit: ${produit.nom}, Stock actuel: ${stockActuel}, Quantité à remettre: ${quantiteCommande}`);
-          
           // Incrémenter le stock
           const nouveauStock = stockActuel + quantiteCommande;
           await produit.update({ stock_actuel: nouveauStock }, { transaction: t });
-          console.log(`✅ Stock remis pour ${produit.nom}: ${stockActuel} → ${nouveauStock}`);
         }
-        
-        console.log('✅ Tous les stocks ont été remis');
       } catch (error) {
         console.error('❌ Erreur lors de la remise du stock:', error);
         throw error;
@@ -453,32 +431,48 @@ exports.updateStatutCommande = async (req, res) => {
 
     // Orchestration des créations
     if (statut === 'expédiée' || statut === 'livrée') {
-      console.log('🔄 Création de la livraison...');
+      try {
       await livraisonController.createLivraisonFromCommande(commande, t);
-      console.log('✅ Livraison créée');
+      } catch (error) {
+        console.error('❌ Erreur lors de la création de la livraison:', error);
+        throw error;
+      }
     }
     
     if (statut === 'livrée') {
-      console.log('🔄 Création de la vente...');
-      const vente = await venteController.createVenteFromCommande(commande, t);
-      console.log('✅ Vente créée, ID:', vente.id_vente);
+      let vente, facture;
       
-      console.log('🔄 Création de la facture...');
-      const facture = await factureController.createFactureFromVente(vente, commande, t);
-      console.log('✅ Facture créée, ID:', facture.id_facture);
+      try {
+        vente = await venteController.createVenteFromCommande(commande, t);
+      } catch (error) {
+        console.error('❌ Erreur lors de la création de la vente:', error);
+        throw error;
+      }
       
-      console.log('🔄 Création du paiement...');
+      try {
+        facture = await factureController.createFactureFromVente(vente, commande, t);
+      } catch (error) {
+        console.error('❌ Erreur lors de la création de la facture:', error);
+        throw error;
+      }
+      
+      try {
       await paiementController.createPaiementFromFacture(facture, commande, t);
-      console.log('✅ Paiement créé');
+      } catch (error) {
+        console.error('❌ Erreur lors de la création du paiement:', error);
+        throw error;
+      }
       
       // Mettre à jour la livraison avec l'id_vente
-      console.log('🔄 Mise à jour de la livraison...');
+      try {
       await livraisonController.updateLivraisonVente(commande.id_commande, vente.id_vente, t);
-      console.log('✅ Livraison mise à jour');
+      } catch (error) {
+        console.error('❌ Erreur lors de la mise à jour de la livraison:', error);
+        throw error;
+      }
     }
 
     // Notifications
-    console.log('🔄 Création de la notification...');
     let notifMessage = '';
     switch (statut) {
       case 'en préparation':
@@ -498,26 +492,20 @@ exports.updateStatutCommande = async (req, res) => {
     }
     // Trouver le client lié à la commande
     const client = await Clients.findByPk(commande.id_client);
-    console.log('Client trouvé:', client ? 'OUI' : 'NON');
     if (client && client.id_user) {
       await Notifications.create({
         id_user: client.id_user,
         type_notif: 'info',
         message: notifMessage
       }, { transaction: t });
-      console.log('✅ Notification créée pour le client');
     }
     // TODO : Notifier le vendeur si besoin
     
     await t.commit();
-    console.log('✅ Transaction commitée avec succès');
-    console.log('=== FIN UPDATE STATUT COMMANDE ===');
     res.json({ success: true, message: `Statut mis à jour à "${statut}".` });
   } catch (error) {
     await t.rollback();
     console.error('❌ Erreur lors de la mise à jour du statut:', error);
-    console.error('Stack trace:', error.stack);
-    console.log('=== FIN UPDATE STATUT COMMANDE AVEC ERREUR ===');
     res.status(500).json({ success: false, message: 'Erreur serveur lors de la mise à jour du statut.' });
   }
 };

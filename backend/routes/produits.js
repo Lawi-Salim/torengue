@@ -142,6 +142,7 @@ router.post('/', protect, authorize('vendeur'), upload.single('image'), async (r
 
   } catch (error) {
     console.error('❌ Erreur lors de la création du produit:', error);
+    console.error(error);
     
     if (error.name === 'SequelizeForeignKeyConstraintError') {
       return res.status(400).json({

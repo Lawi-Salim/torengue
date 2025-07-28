@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import Spinner from '../components/Spinner';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -121,7 +122,14 @@ const Login = () => {
               disabled={loading}
               className="btn btn-primary w-full"
             >
-              {loading ? 'Connexion...' : 'Se connecter'}
+              {loading ? (
+                <>
+                  <Spinner size={20} inline={true} />
+                  <span style={{ marginLeft: '8px' }}>Connexion...</span>
+                </>
+              ) : (
+                'Se connecter'
+              )}
             </button>
           </form>
 
@@ -137,40 +145,6 @@ const Login = () => {
     </div>
   );
 };
-
-// Composant DropdownInscription (identique à Home.jsx)
-function DropdownInscription() {
-  const [isOpen, setIsOpen] = useState(false);
-  return (
-    <div className="nav-dropdown" style={{ display: 'inline-block' }}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="btn btn-secondary"
-        type="button"
-      >
-        Créer un compte
-      </button>
-      {isOpen && (
-        <div className="dropdown-menu" style={{ position: 'absolute', right: 0, zIndex: 10 }}>
-          <Link
-            to="/register?role=vendeur"
-            className="dropdown-item"
-            onClick={() => setIsOpen(false)}
-          >
-            En tant que vendeur
-          </Link>
-          <Link
-            to="/register?role=client"
-            className="dropdown-item"
-            onClick={() => setIsOpen(false)}
-          >
-            En tant que client
-          </Link>
-        </div>
-      )}
-    </div>
-  );
-}
 
 // Nouveau composant DropdownInscriptionLink
 function DropdownInscriptionLink() {

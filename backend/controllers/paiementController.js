@@ -26,16 +26,32 @@ exports.getPaiementsVendeur = async (req, res) => {
         model: Commandes,
         as: 'commande',
         where: { id_vendeur: vendeur.id_vendeur },
-        include: [{
+        include: [
+          {
             model: Clients,
             as: 'client',
-            include: [{
+            include: [
+              {
                 model: Utilisateurs,
                 as: 'user',
-                attributes: ['nom']
-            }]
-        }]
-      }]
+                attributes: ['nom', 'email', 'telephone']
+              }
+            ]
+          },
+          {
+            model: Vendeurs,
+            as: 'vendeur',
+            include: [
+              {
+                model: Utilisateurs,
+                as: 'user',
+                attributes: ['nom', 'email', 'telephone']
+              }
+            ]
+          }
+        ]
+      }],
+      order: [['date_paiement', 'DESC']]
     });
     res.json({ success: true, data: paiements });
   } catch (error) {
@@ -50,7 +66,37 @@ exports.getPaiementsClient = async (req, res) => {
     if (!client) return res.status(404).json({ success: false, message: 'Client non trouvé.' });
     const paiements = await Paiements.findAll({
       where: { id_commande: [sequelize.literal(`SELECT id_commande FROM Commandes WHERE id_client = ${client.id_client}`)] },
-      order: [['date_paiement', 'DESC']]
+      order: [['date_paiement', 'DESC']],
+      include: [
+        {
+          model: Commandes,
+          as: 'commande',
+          include: [
+            {
+              model: Clients,
+              as: 'client',
+              include: [
+                {
+                  model: Utilisateurs,
+                  as: 'user',
+                  attributes: ['nom', 'email', 'telephone']
+                }
+              ]
+            },
+            {
+              model: Vendeurs,
+              as: 'vendeur',
+              include: [
+                {
+                  model: Utilisateurs,
+                  as: 'user',
+                  attributes: ['nom', 'email', 'telephone']
+                }
+              ]
+            }
+          ]
+        }
+      ]
     });
     res.json({ success: true, data: paiements });
   } catch (error) {
