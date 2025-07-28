@@ -67,6 +67,12 @@ app.use('/api/v1/factures', require('./routes/factures'));
 app.use('/api/v1/paiements', require('./routes/paiements'));
 
 
+// Route de test pour vérifier que le serveur fonctionne
+app.get('/api/v1/test', (req, res) => {
+  console.log('=== TEST ROUTE APPELÉE ===');
+  res.json({ success: true, message: 'Serveur fonctionne !', timestamp: new Date().toISOString() });
+});
+
 // Gestionnaire d'erreurs global (doit être après les routes)
 app.use(errorHandler);
 
