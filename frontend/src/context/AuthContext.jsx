@@ -98,10 +98,17 @@ export const AuthProvider = ({ children }) => {
     try {
             const response = await apiService.post('/api/v1/auth/register', userData);
       console.log('[AUTH CONTEXT] Réponse register API:', response);
-      // Après l'inscription, l'utilisateur doit se connecter manuellement.
-      // Nous n'automatisons pas la connexion ici.
-      toast.success(response.data.message || 'Inscription réussie ! Vous pouvez maintenant vous connecter.');
-      return { success: true };
+      toast.success('Inscription réussie ! Connexion en cours...');
+
+      // Connexion automatique après l'inscription
+      const loginData = await login(userData.email, userData.password);
+      if (loginData.success) {
+        const role = loginData.data.user.role;
+        const dashboardPath = role === 'vendeur' ? '/dashboard/vendeur' : '/dashboard/client';
+        navigate(dashboardPath);
+      }
+
+      return { success: true, data: response.data };
     } catch (error) {
       console.error('[AUTH CONTEXT] Erreur register API:', error.response || error);
       toast.error(error.response?.data?.message || "Erreur d'inscription");

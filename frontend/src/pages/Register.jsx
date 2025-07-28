@@ -8,7 +8,7 @@ import { toast } from 'react-hot-toast';
 const Register = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { register, loading, isAuthenticated } = useAuth();
+  const { register, loading, isAuthenticated, user } = useAuth();
 
   const [formData, setFormData] = useState({
     nom: '',
@@ -41,10 +41,11 @@ const Register = () => {
   }, [location.search, navigate]);
 
   useEffect(() => {
-    if (!loading && isAuthenticated) {
-      navigate('/dashboard');
+    if (!loading && isAuthenticated && user) {
+      const dashboardPath = user.role === 'vendeur' ? '/dashboard/vendeur' : '/dashboard/client';
+      navigate(dashboardPath);
     }
-  }, [isAuthenticated, loading, navigate]);
+  }, [isAuthenticated, loading, navigate, user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
