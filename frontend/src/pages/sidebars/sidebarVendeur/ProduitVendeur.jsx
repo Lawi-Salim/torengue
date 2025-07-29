@@ -61,6 +61,9 @@ const ProduitVendeur = () => {
   const paginatedProduits = filteredProduits.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const [vendeurId, setVendeurId] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Supposons que tu as un état loadingForm pour le chargement du formulaire
+  // Ajoute-le si besoin :
+  // const [loadingForm, setLoadingForm] = useState(false);
 
   // Récupérer les catégories, unités et produits du vendeur
   useEffect(() => {
@@ -503,8 +506,18 @@ const ProduitVendeur = () => {
                     transition: 'all 0.2s',
                     boxShadow: '0 2px 4px rgba(34, 197, 94, 0.2)'
                   }}
+                  disabled={loading}
                 >
-                  <FiCheckCircle /> Enregistrer
+                  {loading ? (
+                    <>
+                      <Spinner size={18} inline={true} />
+                      <span style={{ marginLeft: 8,  width: '100%', textAlign: 'center'}}>Enregistrement...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FiCheckCircle /> Enregistrer
+                    </>
+                  )}
                 </button>
               </div>
             </div>

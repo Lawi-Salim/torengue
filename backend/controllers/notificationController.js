@@ -18,6 +18,26 @@ exports.getAllNotifications = async (req, res) => {
   }
 };
 
+exports.getNotificationsByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (req.user.id_user !== parseInt(userId, 10) && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Accès non autorisé.' });
+    }
+
+    const notifications = await Notifications.findAll({
+      where: { id_user: userId },
+      order: [['date_notif', 'DESC']],
+    });
+
+    res.json(notifications);
+  } catch (error) {
+    console.error(`Erreur lors de la récupération des notifications pour l'utilisateur ${req.params.userId}:`, error);
+    res.status(500).send('Erreur serveur');
+  }
+};
+
 exports.createNotification = async (id_user, type_notif, message, url = null) => {
   try {
     await Notifications.create({ id_user, type_notif, message, url });

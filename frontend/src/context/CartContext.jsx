@@ -51,11 +51,16 @@ export const CartProvider = ({ children }) => {
     );
   };
 
+  const clearCart = () => {
+    setCartItems([]);
+  };
+
   const value = {
     cartItems,
     addToCart,
     removeFromCart,
     updateCartQuantity,
+    clearCart,
     showCartModal,
     openCartModal: () => setShowCartModal(true),
     closeCartModal: () => setShowCartModal(false)

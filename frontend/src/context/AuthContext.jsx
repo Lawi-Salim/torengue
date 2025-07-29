@@ -29,13 +29,13 @@ export const AuthProvider = ({ children }) => {
 
   // Vérifier le token au démarrage
   const fetchNotifications = async () => {
+    if (!user?.id_user) return;
     try {
-      const { data } = await apiService.get('/api/v1/notifications');
+      const { data } = await apiService.get(`/api/v1/notifications/user/${user.id_user}`);
       setNotifications(data);
       setUnreadCount(data.filter(n => !n.notif_lu).length);
     } catch (error) {
       console.error('Erreur lors de la récupération des notifications:', error);
-      // Ne pas déconnecter l'utilisateur pour une erreur de notif
     }
   };
 
@@ -56,6 +56,12 @@ export const AuthProvider = ({ children }) => {
 
     checkAuth();
   }, [token]);
+
+  useEffect(() => {
+    if (user?.id_user) {
+      fetchNotifications();
+    }
+  }, [user]);
 
   const login = async (email, password) => {
     try {

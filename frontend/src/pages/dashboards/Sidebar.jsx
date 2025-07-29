@@ -23,6 +23,7 @@ const Sidebar = () => {
       { to: '/dashboard/vendeur', label: 'Home', icon: FiHome, end: true },
       { to: '/dashboard/vendeur/produits', label: 'Mes produits', icon: FiPackage },
       { to: '/dashboard/vendeur/clients', label: 'Mes clients', icon: FiUsers},
+      { to: '/dashboard/vendeur/notifications', label: 'Notifications', icon: FiBell },
       { to: '/dashboard/vendeur/paiements', label: 'Paiements', icon: FiCreditCard },
       { to: '/dashboard/vendeur/commandes', label: 'Commandes', icon: FiClipboard },
       { to: '/dashboard/vendeur/factures', label: 'Factures', icon: FaFileInvoiceDollar },
@@ -34,6 +35,7 @@ const Sidebar = () => {
       { to: '/dashboard/client', label: 'Home', icon: FiHome, end: true },
       { to: '/dashboard/client/produits', label: 'Produits', icon: FiPackage },
       { to: '/dashboard/client/vendeurs', label: 'Mes vendeurs', icon: FiUsers},
+      { to: '/dashboard/client/notifications', label: 'Notifications', icon: FiBell },
       { to: '/dashboard/client/paiements', label: 'Paiements', icon: FiCreditCard },
       { to: '/dashboard/client/commandes', label: 'Commandes', icon: FiClipboard },
       { to: '/dashboard/client/factures', label: 'Factures', icon: FaFileInvoiceDollar }

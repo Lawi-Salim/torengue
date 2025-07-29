@@ -176,7 +176,14 @@ const PaiementClient = () => {
                   <strong>Montant payé :</strong> {selectedPaiement.montant_paye ? `${Number(selectedPaiement.montant_paye)} KMF` : 'N/A'}
                 </div>
                 <div>
-                  <strong>Facture associée :</strong> {selectedPaiement.facture ? `FACT-${selectedPaiement.facture.id_facture}` : 'N/A'}
+                  <strong>Facture associée :</strong> {selectedPaiement && (
+                    <>
+                      {console.log('DEBUG selectedPaiement:', selectedPaiement)}
+                      <div>
+                        <strong>Facture associée :</strong> {selectedPaiement.facture && selectedPaiement.facture.id_facture ? `FACT-${selectedPaiement.facture.id_facture}` : selectedPaiement.id_facture ? `FACT-${selectedPaiement.id_facture}` : 'N/A'}
+                      </div>
+                    </>
+                  )}
                 </div>
                 <div>
                   <strong>Commande associée :</strong> {selectedPaiement.commande ? `CMD-${selectedPaiement.commande.id_commande}` : 'N/A'}

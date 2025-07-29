@@ -73,7 +73,7 @@ const HomeClient = () => {
       <div className="card mt-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="card-title">Commandes récentes</h2>
-          <a href="#" className="text-sm font-medium text-primary-600 hover:underline">Voir tout</a>
+          {/* <a href="#" className="text-sm font-medium text-primary-600 hover:underline">Voir tout</a> */}
         </div>
         <ul className="space-y-3">
           {commandes.slice(0, 5).map((c, i) => (

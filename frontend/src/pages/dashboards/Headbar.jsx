@@ -1,17 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
-import { Link, useNavigate } from 'react-router-dom';
 import apiService from '../../apiService';
+import { Link, useNavigate } from 'react-router-dom';
 import NotificationPopup from '../../components/NotificationPopup';
 import Modal from '../../components/Modal';
 import Spinner from '../../components/Spinner';
 import { FiMail, FiPhone, FiUser, FiMap, FiShoppingCart, FiBell, FiTrash2 } from 'react-icons/fi';
 import ProfilUser from './ProfilUser';
+import toast from 'react-hot-toast';
 
 const Headbar = () => {
   const { user, logout, notifications, unreadCount, markNotificationAsRead } = useAuth();
-  const { cartItems, removeFromCart, updateCartQuantity, openCartModal, showCartModal, closeCartModal } = useCart();
+  const { cartItems, removeFromCart, updateCartQuantity, openCartModal, showCartModal, closeCartModal, clearCart } = useCart();
   const navigate = useNavigate();
   const cartItemCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
   const [open, setOpen] = useState(false);
@@ -21,6 +22,7 @@ const Headbar = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [profileData, setProfileData] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
+  const [loading, setLoading] = useState(false);
   const notificationGroupRef = useRef(null);
 
     const openProfileModal = async () => {
@@ -52,15 +54,62 @@ const Headbar = () => {
     navigate('/login');
   };
 
+  const handlePaiement = async (e) => {
+    e.preventDefault();
+    if (cartItems.length === 0) {
+      toast.error('Votre panier est vide.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const commandeData = {
+        produits: cartItems.map(item => ({
+          id_produit: item.id_produit,
+          quantite: item.quantity,
+          prix_unitaire: item.prix_unitaire
+        })),
+        id_client: user.id_user,
+      };
+
+      await apiService.post('/api/v1/commandes', commandeData);
+      
+      toast.success('Commande passée avec succès !');
+      clearCart();
+
+    } catch (error) {
+      console.error('Erreur lors du paiement:', error);
+      toast.error(error.response?.data?.message || 'Une erreur est survenue lors du paiement.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNotificationClick = () => {
+    if (user?.role === 'admin') {
+      navigate('/dashboard/admin/notifications');
+    } else if (user?.role === 'vendeur') {
+      navigate('/dashboard/vendeur/notifications');
+    } else if (user?.role === 'client') {
+      navigate('/dashboard/client/notifications');
+    }
+  };
+
   useEffect(() => {
     const fetchPendingCount = async () => {
-      if (user?.role === 'admin') {
-        try {
-          const { data } = await apiService.get('/api/v1/demandes-vendeur/pending-count');
-          setPendingCount(data.count);
-        } catch (error) {
-          console.error('Erreur lors de la récupération du nombre de demandes en attente:', error);
+      setLoading(true);
+      try {
+        if (user?.role === 'admin') {
+          try {
+            const { data } = await apiService.get('/api/v1/demandes-vendeur/pending-count');
+            setPendingCount(data.count);
+          } catch (error) {
+            console.error('Erreur lors de la récupération du nombre de demandes en attente:', error);
+          }
         }
+      } catch (error) {
+        toast.error('Erreur de connexion')
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -72,7 +121,7 @@ const Headbar = () => {
   // Fermer le popup de notification si on clique en dehors
   useEffect(() => {
     const handleClickOutside = (event) => {
-            if (notificationGroupRef.current && !notificationGroupRef.current.contains(event.target)) {
+          if (notificationGroupRef.current && !notificationGroupRef.current.contains(event.target)) {
         setIsNotificationOpen(false);
       }
     };
@@ -102,7 +151,7 @@ const Headbar = () => {
       <div className="actions-user">
         {/* Notifications */}
         <div className="headbar-notification-group" ref={notificationGroupRef}>
-          {(user?.role === 'client' || user?.role === 'vendeur') && (
+          {(user?.role === 'client') && (
             <button className='shop-cart' onClick={openCartModal}>
               <FiShoppingCart className="headbar-cart" title="Panier" />
               {cartItemCount > 0 && <span className='cart-badge'>{cartItemCount}</span>}
@@ -190,12 +239,17 @@ const Headbar = () => {
                 <button
                   className='btn btn-primary btn-validate-order'
                   style={{ width: '13rem', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '38px' }}
-                  onClick={() => {
-                    // Rediriger vers la page des produits pour passer la commande
-                    navigate('/dashboard/client/produits');
-                  }}
+                  onClick={handlePaiement}
+                  disabled={loading}
                 >
-                  Passer la commande
+                  {loading ? (
+                    <>
+                      <Spinner size={15} inline={true} />
+                      <span style={{ marginLeft: '8px' }}>Paiement en cours...</span>
+                    </>
+                  ) : (
+                    'Payer la commande'
+                  )}
                 </button>
               </div>
             </>

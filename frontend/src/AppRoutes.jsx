@@ -27,6 +27,7 @@ import VendeurDashboard from './pages/dashboards/Vendeur';
 import HomeVendeur from './pages/sidebars/sidebarVendeur/HomeVendeur';
 import ProduitVendeur from './pages/sidebars/sidebarVendeur/ProduitVendeur';
 import ClientFavoris from './pages/sidebars/sidebarVendeur/ClientFavoris';
+import NotificationsVendeur from './pages/sidebars/sidebarVendeur/NotificationsVendeur';
 import PaiementVendeur from './pages/sidebars/sidebarVendeur/PaiementVendeur';
 import CommandeVendeur from './pages/sidebars/sidebarVendeur/CommandeVendeur';
 import FactureVendeur from './pages/sidebars/sidebarVendeur/FactureVendeur';
@@ -41,6 +42,7 @@ import PaiementClient from './pages/sidebars/sidebarClient/PaiementClient';
 import CommandeClient from './pages/sidebars/sidebarClient/CommandeClient';
 import FactureClient from './pages/sidebars/sidebarClient/FactureClient';
 import VendeurFavoris from './pages/sidebars/sidebarClient/VendeurFavoris';
+import NotificationsClient from './pages/sidebars/sidebarClient/NotificationsClient';
 
 const AppRoutes = () => {
   return (
@@ -70,6 +72,7 @@ const AppRoutes = () => {
           <Route path="home" element={<HomeVendeur />} />
           <Route path="produits" element={<ProduitVendeur />} />
           <Route path="clients" element={<ClientFavoris />} />
+          <Route path="notifications" element={<NotificationsVendeur />} />
           <Route path="paiements" element={<PaiementVendeur />} />
           <Route path="commandes" element={<CommandeVendeur />} />
           <Route path="factures" element={<FactureVendeur />} />
@@ -82,6 +85,7 @@ const AppRoutes = () => {
           <Route index element={<HomeClient />} />
           <Route path="home" element={<HomeClient />} />
           <Route path="produits" element={<ProduitClient />} />
+          <Route path="notifications" element={<NotificationsClient />} />
           <Route path="paiements" element={<PaiementClient />} />
           <Route path="commandes" element={<CommandeClient />} />
           <Route path="factures" element={<FactureClient />} />

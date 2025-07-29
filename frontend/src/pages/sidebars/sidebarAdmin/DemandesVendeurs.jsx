@@ -86,9 +86,16 @@ const DemandesVendeurs = () => {
           <div className="action-buttons">
             <button 
               onClick={() => handleApprove(row.original.id_devenirvendeur)}
+              disabled={loading}
               className="btn-approve"
             >
-              <FiCheckCircle size={14.9} />
+              {loading ? (
+                <>
+                  <Spinner size={15} inline={true} />
+                </>
+              ) : (
+                <FiCheckCircle size={14.9} />
+              )}
             </button>
             <button 
               onClick={() => handleReject(row.original.id_devenirvendeur)}

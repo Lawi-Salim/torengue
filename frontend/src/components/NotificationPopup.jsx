@@ -10,6 +10,7 @@ import {
   FiPackage,
   FiAlertTriangle
 } from 'react-icons/fi';
+import { useAuth } from '../context/AuthContext';
 
 const getNotificationDetails = (notification) => {
   switch (notification.type_notif) {
@@ -60,6 +61,17 @@ const getNotificationDetails = (notification) => {
 
 const NotificationPopup = ({ notifications, onClose, onNotificationClick }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const getNotificationsPageRoute = (notif) => {
+    if (user?.role === 'admin') {
+      if (notif?.type_notif === 'demande_vendeur') {
+        return '/dashboard/admin/demandes-vendeurs';
+      }
+      return '/dashboard/admin/notifications';
+    }
+    if (user?.role === 'vendeur') return '/dashboard/vendeur/notifications';
+    if (user?.role === 'client') return '/dashboard/client/notifications';
+  };
   return (
     <div className="notification-popup">
       <div className="notification-popup-header">
@@ -77,12 +89,7 @@ const NotificationPopup = ({ notifications, onClose, onNotificationClick }) => {
                   if (onNotificationClick) {
                     onNotificationClick(notif.id_notif);
                   }
-                  // Redirection personnalisée pour les commandes vendeur
-                  if (notif.type_notif === 'new_order') {
-                    navigate('/dashboard/vendeur/commandes');
-                  } else {
-                  navigate('/dashboard/admin/notifications');
-                  }
+                  navigate(getNotificationsPageRoute(notif));
                   onClose();
                 }}
               >
@@ -99,7 +106,7 @@ const NotificationPopup = ({ notifications, onClose, onNotificationClick }) => {
         )}
       </div>
       <div className="notification-popup-footer">
-        <Link to="/dashboard/admin/notifications" onClick={onClose}>
+        <Link to={getNotificationsPageRoute()} onClick={onClose}>
           Voir toutes les notifications
         </Link>
       </div>

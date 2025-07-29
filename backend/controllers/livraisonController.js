@@ -48,8 +48,8 @@ exports.getLivraisonsVendeur = async (req, res) => {
         where: { id_vendeur: vendeur.id_vendeur },
         include: [
           {
-            model: Clients,
-            as: 'client',
+          model: Clients,
+          as: 'client',
             attributes: ['id_client', 'adresse_facturation', 'id_user'],
             include: [
               {
@@ -64,8 +64,8 @@ exports.getLivraisonsVendeur = async (req, res) => {
             as: 'vendeur',
             include: [
               {
-                model: Utilisateurs,
-                as: 'user',
+            model: Utilisateurs,
+            as: 'user',
                 attributes: ['nom', 'email', 'telephone']
               }
             ]

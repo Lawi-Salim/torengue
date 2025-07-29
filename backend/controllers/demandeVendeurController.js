@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 // @route   POST /api/devenir-vendeur
 // @access  Public
 exports.createDemande = async (req, res) => {
-  const { nom, email, mot_de_passe, telephone, nom_boutique, nationalite, description } = req.body;
+  const { nom, email, mot_de_passe, telephone, nom_boutique, nationalite, adresse, description } = req.body;
 
   // Validation simple
   if (!nom || !email || !mot_de_passe || !nom_boutique) {
@@ -22,6 +22,7 @@ exports.createDemande = async (req, res) => {
       telephone,
       nom_boutique,
       nationalite,
+      adresse,
       description,
       statut: 'en_attente' // Statut initial
     });
@@ -110,6 +111,7 @@ exports.approveDemande = async (req, res) => {
       id_user: user.id_user,
       nom_boutique: demande.nom_boutique,
       nationalite: demande.nationalite,
+      adresse: demande.adresse,
       description: demande.description,
       statut: 'valide'
     }, { transaction: t });

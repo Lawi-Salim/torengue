@@ -59,7 +59,7 @@ exports.createCommande = async (req, res) => {
       await Notifications.create({
         id_user: vendeur.id_user,
         type_notif: 'new_order',
-        message: `Nouvelle commande #${commande.id_commande} reçue.`
+        message: `Nouvelle commande N°${commande.id_commande} reçue.`
       }, { transaction: t });
     }
 
@@ -438,7 +438,7 @@ exports.updateStatutCommande = async (req, res) => {
     if (statut === 'expédiée' || statut === 'livrée') {
       console.log('🔄 Création de la livraison...');
       try {
-        await livraisonController.createLivraisonFromCommande(commande, t);
+      await livraisonController.createLivraisonFromCommande(commande, t);
         console.log('✅ Livraison créée avec succès');
       } catch (error) {
         console.error('❌ Erreur lors de la création de la livraison:', error);
@@ -452,7 +452,7 @@ exports.updateStatutCommande = async (req, res) => {
       console.log('🔄 Création de la vente...');
       try {
         vente = await venteController.createVenteFromCommande(commande, t);
-        console.log('✅ Vente créée, ID:', vente.id_vente);
+      console.log('✅ Vente créée, ID:', vente.id_vente);
       } catch (error) {
         console.error('❌ Erreur lors de la création de la vente:', error);
         throw error;
@@ -461,7 +461,7 @@ exports.updateStatutCommande = async (req, res) => {
       console.log('🔄 Création de la facture...');
       try {
         facture = await factureController.createFactureFromVente(vente, commande, t);
-        console.log('✅ Facture créée, ID:', facture.id_facture);
+      console.log('✅ Facture créée, ID:', facture.id_facture);
       } catch (error) {
         console.error('❌ Erreur lors de la création de la facture:', error);
         throw error;
@@ -469,7 +469,7 @@ exports.updateStatutCommande = async (req, res) => {
       
       console.log('🔄 Création du paiement...');
       try {
-        await paiementController.createPaiementFromFacture(facture, commande, t);
+      await paiementController.createPaiementFromFacture(facture, commande, t);
         console.log('✅ Paiement créé avec succès');
       } catch (error) {
         console.error('❌ Erreur lors de la création du paiement:', error);
@@ -479,7 +479,7 @@ exports.updateStatutCommande = async (req, res) => {
       // Mettre à jour la livraison avec l'id_vente
       console.log('🔄 Mise à jour de la livraison...');
       try {
-        await livraisonController.updateLivraisonVente(commande.id_commande, vente.id_vente, t);
+      await livraisonController.updateLivraisonVente(commande.id_commande, vente.id_vente, t);
         console.log('✅ Livraison mise à jour avec succès');
       } catch (error) {
         console.error('❌ Erreur lors de la mise à jour de la livraison:', error);
@@ -488,31 +488,17 @@ exports.updateStatutCommande = async (req, res) => {
     }
 
     // Notifications
-    let notifMessage = '';
-    switch (statut) {
-      case 'en préparation':
-        notifMessage = `Votre commande #${commande.id_commande} est en préparation.`;
-        break;
-      case 'expédiée':
-        notifMessage = `Votre commande #${commande.id_commande} a été expédiée.`;
-        break;
-      case 'livrée':
-        notifMessage = `Votre commande #${commande.id_commande} a été livrée.`;
-        break;
-      case 'annulée':
-        notifMessage = `Votre commande #${commande.id_commande} a été annulée.`;
-        break;
-      default:
-        notifMessage = `Statut de la commande #${commande.id_commande} mis à jour : ${statut}`;
-    }
-    // Trouver le client lié à la commande
-    const client = await Clients.findByPk(commande.id_client);
-    if (client && client.id_user) {
-      await Notifications.create({
-        id_user: client.id_user,
-        type_notif: 'info',
-        message: notifMessage
-      }, { transaction: t });
+    if (statut === 'livrée') {
+      const notifMessage = `Votre commande N°${commande.id_commande} a été livrée.`;
+      // Trouver le client lié à la commande
+      const client = await Clients.findByPk(commande.id_client);
+      if (client && client.id_user) {
+        await Notifications.create({
+          id_user: client.id_user,
+          type_notif: 'info',
+          message: notifMessage
+        }, { transaction: t });
+      }
     }
     // TODO : Notifier le vendeur si besoin
     
@@ -525,6 +511,6 @@ exports.updateStatutCommande = async (req, res) => {
     console.error('❌ Erreur lors de la mise à jour du statut:', error);
     console.error('Stack trace:', error.stack);
     console.log('=== FIN UPDATE STATUT COMMANDE AVEC ERREUR ===');
-    res.status(500).json({ success: false, message: 'Erreur serveur lors de la mise à jour du statut.' });
+    res.status(500).json({ success: false, message: 'Erreur serveur lors de la mise à jour du statut.', error: error.message, stack: error.stack });
   }
 };
