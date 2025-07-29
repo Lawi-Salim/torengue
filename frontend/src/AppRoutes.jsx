@@ -9,6 +9,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ForgotPassword from './pages/ForgotPassword';
 import Home from './pages/Home';
 import FactureView from './pages/FactureView';
+import Error from './components/Error';
 
 // Admin
 import Admin from './pages/dashboards/Admin';
@@ -52,6 +53,8 @@ const AppRoutes = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/erreur" element={<Error />} />
+        
         {/* Routes de l'admin */}
         <Route path="/dashboard/admin" element={<Admin />}>
           <Route index element={<DashboardHome />} />

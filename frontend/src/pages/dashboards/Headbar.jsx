@@ -98,13 +98,13 @@ const Headbar = () => {
     const fetchPendingCount = async () => {
       setLoading(true);
       try {
-        if (user?.role === 'admin') {
-          try {
-            const { data } = await apiService.get('/api/v1/demandes-vendeur/pending-count');
-            setPendingCount(data.count);
-          } catch (error) {
-            console.error('Erreur lors de la récupération du nombre de demandes en attente:', error);
-          }
+      if (user?.role === 'admin') {
+        try {
+          const { data } = await apiService.get('/api/v1/demandes-vendeur/pending-count');
+          setPendingCount(data.count);
+        } catch (error) {
+          console.error('Erreur lors de la récupération du nombre de demandes en attente:', error);
+        }
         }
       } catch (error) {
         toast.error('Erreur de connexion')
@@ -121,7 +121,7 @@ const Headbar = () => {
   // Fermer le popup de notification si on clique en dehors
   useEffect(() => {
     const handleClickOutside = (event) => {
-          if (notificationGroupRef.current && !notificationGroupRef.current.contains(event.target)) {
+            if (notificationGroupRef.current && !notificationGroupRef.current.contains(event.target)) {
         setIsNotificationOpen(false);
       }
     };

@@ -31,20 +31,29 @@ const Login = () => {
       const result = await login(formData.email, formData.password);
       
       if (result) {
-        // Redirection selon le rôle
-        const role = localStorage.getItem('userRole');
-        if (role) {
-          // Redirection vers le dashboard approprié
-          if (role === 'admin') {
-            navigate('/dashboard/admin');
-          } else if (role === 'vendeur') {
-            navigate('/dashboard/vendeur');
-          } else if (role === 'client') {
-            navigate('/dashboard/client');
-          }
+        // Vérifier s'il y a une redirection sauvegardée
+        const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+        
+        if (redirectPath && redirectPath.startsWith('/dashboard/')) {
+          // Rediriger vers la page où l'utilisateur était avant l'erreur
+          sessionStorage.removeItem('redirectAfterLogin'); // Nettoyer
+          navigate(redirectPath);
         } else {
-          // fallback si pas de rôle dans la réponse
-          navigate('/');
+          // Redirection normale selon le rôle
+          const role = localStorage.getItem('userRole');
+          if (role) {
+            // Redirection vers le dashboard approprié
+            if (role === 'admin') {
+              navigate('/dashboard/admin');
+            } else if (role === 'vendeur') {
+              navigate('/dashboard/vendeur');
+            } else if (role === 'client') {
+              navigate('/dashboard/client');
+            }
+          } else {
+            // fallback si pas de rôle dans la réponse
+            navigate('/');
+          }
         }
       }
     } catch (error) {

@@ -74,7 +74,7 @@ const Register = () => {
         };
         const response = await apiService.post('/api/v1/demandes-vendeur', vendeurData);
         toast.success('Votre demande a été envoyée et est en attente d\'approbation.');
-        navigate('/'); // Redirige vers la page d'accueil par exemple
+        navigate('/login'); // Redirige vers la page de connexion
       } catch (error) {
         const errorMessage = error.response?.data?.message || 'Une erreur est survenue lors de la soumission.';
         toast.error(`Erreur: ${errorMessage}`);

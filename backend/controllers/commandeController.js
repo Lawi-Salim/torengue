@@ -490,14 +490,14 @@ exports.updateStatutCommande = async (req, res) => {
     // Notifications
     if (statut === 'livrée') {
       const notifMessage = `Votre commande N°${commande.id_commande} a été livrée.`;
-      // Trouver le client lié à la commande
-      const client = await Clients.findByPk(commande.id_client);
-      if (client && client.id_user) {
-        await Notifications.create({
-          id_user: client.id_user,
-          type_notif: 'info',
-          message: notifMessage
-        }, { transaction: t });
+    // Trouver le client lié à la commande
+    const client = await Clients.findByPk(commande.id_client);
+    if (client && client.id_user) {
+      await Notifications.create({
+        id_user: client.id_user,
+        type_notif: 'info',
+        message: notifMessage
+      }, { transaction: t });
       }
     }
     // TODO : Notifier le vendeur si besoin
