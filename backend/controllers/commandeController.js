@@ -305,6 +305,11 @@ exports.getCommandesVendeur = async (req, res) => {
 
 // Nouvelle méthode pour mettre à jour le statut d'une commande
 exports.updateStatutCommande = async (req, res) => {
+  console.log('=== DÉBUT UPDATE STATUT COMMANDE ===');
+  console.log('ID commande:', req.params.id);
+  console.log('Nouveau statut:', req.body.statut);
+  console.log('User ID:', req.user.id_user);
+  
   const { id } = req.params;
   const { statut } = req.body;
   
@@ -431,8 +436,10 @@ exports.updateStatutCommande = async (req, res) => {
 
     // Orchestration des créations
     if (statut === 'expédiée' || statut === 'livrée') {
+      console.log('🔄 Création de la livraison...');
       try {
-      await livraisonController.createLivraisonFromCommande(commande, t);
+        await livraisonController.createLivraisonFromCommande(commande, t);
+        console.log('✅ Livraison créée avec succès');
       } catch (error) {
         console.error('❌ Erreur lors de la création de la livraison:', error);
         throw error;
@@ -442,30 +449,38 @@ exports.updateStatutCommande = async (req, res) => {
     if (statut === 'livrée') {
       let vente, facture;
       
+      console.log('🔄 Création de la vente...');
       try {
         vente = await venteController.createVenteFromCommande(commande, t);
+        console.log('✅ Vente créée, ID:', vente.id_vente);
       } catch (error) {
         console.error('❌ Erreur lors de la création de la vente:', error);
         throw error;
       }
       
+      console.log('🔄 Création de la facture...');
       try {
         facture = await factureController.createFactureFromVente(vente, commande, t);
+        console.log('✅ Facture créée, ID:', facture.id_facture);
       } catch (error) {
         console.error('❌ Erreur lors de la création de la facture:', error);
         throw error;
       }
       
+      console.log('🔄 Création du paiement...');
       try {
-      await paiementController.createPaiementFromFacture(facture, commande, t);
+        await paiementController.createPaiementFromFacture(facture, commande, t);
+        console.log('✅ Paiement créé avec succès');
       } catch (error) {
         console.error('❌ Erreur lors de la création du paiement:', error);
         throw error;
       }
       
       // Mettre à jour la livraison avec l'id_vente
+      console.log('🔄 Mise à jour de la livraison...');
       try {
-      await livraisonController.updateLivraisonVente(commande.id_commande, vente.id_vente, t);
+        await livraisonController.updateLivraisonVente(commande.id_commande, vente.id_vente, t);
+        console.log('✅ Livraison mise à jour avec succès');
       } catch (error) {
         console.error('❌ Erreur lors de la mise à jour de la livraison:', error);
         throw error;
@@ -502,10 +517,14 @@ exports.updateStatutCommande = async (req, res) => {
     // TODO : Notifier le vendeur si besoin
     
     await t.commit();
+    console.log('✅ Transaction commitée avec succès');
+    console.log('=== FIN UPDATE STATUT COMMANDE ===');
     res.json({ success: true, message: `Statut mis à jour à "${statut}".` });
   } catch (error) {
     await t.rollback();
     console.error('❌ Erreur lors de la mise à jour du statut:', error);
+    console.error('Stack trace:', error.stack);
+    console.log('=== FIN UPDATE STATUT COMMANDE AVEC ERREUR ===');
     res.status(500).json({ success: false, message: 'Erreur serveur lors de la mise à jour du statut.' });
   }
 };

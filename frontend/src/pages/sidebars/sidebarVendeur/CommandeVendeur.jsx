@@ -76,14 +76,24 @@ const CommandeVendeur = () => {
   const handleEvoluerStatut = async (id_commande, currentStatus) => {
     const nextStatus = getNextStatus(currentStatus);
     if (!nextStatus) return;
+    
+    console.log('=== DÉBUT ÉVOLUTION STATUT ===');
+    console.log('ID commande:', id_commande);
+    console.log('Statut actuel:', currentStatus);
+    console.log('Nouveau statut:', nextStatus);
+    
     try {
-      await apiService.put(`/api/v1/commandes/${id_commande}/statut`, { statut: nextStatus });
+      const response = await apiService.put(`/api/v1/commandes/${id_commande}/statut`, { statut: nextStatus });
+      console.log('✅ Réponse du serveur:', response.data);
       toast.success(`Commande passée à "${nextStatus}" !`);
       setCommandes(prev => prev.map(cmd =>
         cmd.id_commande === id_commande ? { ...cmd, statut: nextStatus } : cmd
       ));
       setSelectedCommande(cmd => cmd ? { ...cmd, statut: nextStatus } : cmd);
     } catch (err) {
+      console.error('❌ Erreur côté frontend:', err);
+      console.error('Response data:', err.response?.data);
+      console.error('Response status:', err.response?.status);
       toast.error(err.response?.data?.message || 'Erreur lors du changement de statut.');
     }
   };
