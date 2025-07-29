@@ -19,6 +19,7 @@ const userRoutes = require('./routes/user');
 const vendeurRoutes = require('./routes/vendeurs');
 const notificationRoutes = require('./routes/notificationRoutes');
 const commandesRoutes = require('./routes/commandes');
+const pingRoutes = require('./routes/ping'); // Route ping pour UptimeRobot
 
 // Import de l'initialisation des données
 const initRailwayData = require('./scripts/init-railway-data');
@@ -65,7 +66,7 @@ app.use('/api/v1/commandes', commandesRoutes);
 app.use('/api/v1/livraisons', require('./routes/livraisons'));
 app.use('/api/v1/factures', require('./routes/factures'));
 app.use('/api/v1/paiements', require('./routes/paiements'));
-
+app.use('/api/v1', pingRoutes); // Route ping pour UptimeRobot
 
 // Route de test pour vérifier que le serveur fonctionne
 app.get('/api/v1/test', (req, res) => {
