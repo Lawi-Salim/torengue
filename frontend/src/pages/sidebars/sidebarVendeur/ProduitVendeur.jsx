@@ -290,8 +290,9 @@ const ProduitVendeur = () => {
   };
 
   // Nouvelle gestion du statut de stock
-  const getStockStatus = (stock) => {
+  const getStockStatus = (stock, seuilCritique = 3) => {
     if (stock === 0) return 'rupture';
+    if (stock <= seuilCritique) return 'rupture'; // Considérer comme rupture si ≤ seuil critique
     if (stock >= 1 && stock <= 10) return 'critique';
     if (stock >= 11 && stock <= 50) return 'moyen';
     if (stock >= 51 && stock <= 149) return 'suffisant';
@@ -647,7 +648,7 @@ const ProduitVendeur = () => {
             </thead>
             <tbody>
               {paginatedProduits.map((produit) => {
-                const stockStatus = getStockStatus(produit.stock_actuel);
+                const stockStatus = getStockStatus(produit.stock_actuel, produit.seuil_critique);
                 const stockColor =
                   stockStatus === 'rupture' ? 'var(--red-500)'
                   : stockStatus === 'critique' ? 'var(--red-500)'
@@ -685,10 +686,10 @@ const ProduitVendeur = () => {
                     <td style={{ color: 'var(--green-600)', fontWeight: 600 }}>{parseFloat(produit.prix_unitaire).toLocaleString()} kmf</td>
                     <td>
                       {(() => {
-                        const status = getStockStatus(produit.stock_actuel);
+                        const status = getStockStatus(produit.stock_actuel, produit.seuil_critique);
                         const color = getStockColor(status);
                         const label =
-                          status === 'rupture' ? 'Rupture'
+                          status === 'rupture' ? 'En rupture'
                           : status === 'critique' ? 'Critique'
                           : status === 'moyen' ? 'Moyen'
                           : status === 'suffisant' ? 'Suffisant'

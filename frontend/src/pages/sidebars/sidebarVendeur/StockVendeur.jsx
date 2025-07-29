@@ -29,8 +29,9 @@ const getImageUrl = (imageUrl) => {
   return API_IMAGE_URL + imageUrl;
 };
 
-const getStockStatus = (stock) => {
+const getStockStatus = (stock, seuilCritique = 3) => {
   if (stock === 0) return 'rupture';
+  if (stock <= seuilCritique) return 'rupture'; // Considérer comme rupture si ≤ seuil critique
   if (stock >= 1 && stock <= 10) return 'critique';
   if (stock >= 11 && stock <= 50) return 'moyen';
   if (stock >= 51 && stock <= 149) return 'suffisant';
@@ -51,7 +52,7 @@ const getStockColor = (status) => {
 
 const getStockLabel = (status) => {
   switch (status) {
-    case 'rupture': return 'Rupture';
+    case 'rupture': return 'En rupture';
     case 'critique': return 'Critique';
     case 'moyen': return 'Moyen';
     case 'suffisant': return 'Suffisant';
@@ -208,7 +209,7 @@ const StockVendeur = () => {
               </thead>
               <tbody>
                 {paginatedStocks.map((produit) => {
-                  const status = getStockStatus(produit.stock_actuel);
+                  const status = getStockStatus(produit.stock_actuel, produit.seuil_critique);
                   const color = getStockColor(status);
                   const label = getStockLabel(status);
                   return (
@@ -290,7 +291,7 @@ const StockVendeur = () => {
                 </div>
                 <div>
                   <div style={{ fontWeight: 600, fontSize: '1.1rem', color: 'var(--gray-900)' }}>{selected.nom}</div>
-                  <div style={{ fontSize: '0.95rem', color: 'var(--gray-500)' }}>Stock actuel : <b style={{ color: getStockColor(getStockStatus(selected.stock_actuel)) }}>{selected.stock_actuel}</b></div>
+                  <div style={{ fontSize: '0.95rem', color: 'var(--gray-500)' }}>Stock actuel : <b style={{ color: getStockColor(getStockStatus(selected.stock_actuel, selected.seuil_critique)) }}>{selected.stock_actuel}</b></div>
                   <div style={{ fontSize: '0.92rem', color: 'var(--gray-500)' }}>Seuil d'alerte : {selected.seuil_alerte}</div>
                   <div style={{ fontSize: '0.92rem', color: 'var(--gray-500)' }}>Seuil critique : {selected.seuil_critique}</div>
                 </div>

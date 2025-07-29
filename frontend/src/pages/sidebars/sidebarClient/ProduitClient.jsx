@@ -11,8 +11,9 @@ import './styleClient.css';
 const API_IMAGE_URL = `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/v1/produits/images/`;
 
 const ProductCard = ({ produit, onViewVendor, onAddToCart }) => {
-  const getStockStatus = (stock) => {
+  const getStockStatus = (stock, seuilCritique = 3) => {
     if (stock === 0) return 'rupture';
+    if (stock <= seuilCritique) return 'rupture'; // Considérer comme rupture si ≤ seuil critique
     if (stock >= 1 && stock <= 10) return 'critique';
     if (stock >= 11 && stock <= 50) return 'moyen';
     if (stock >= 51 && stock <= 149) return 'suffisant';
@@ -33,7 +34,7 @@ const ProductCard = ({ produit, onViewVendor, onAddToCart }) => {
 
   const getStockLabel = (status) => {
     switch (status) {
-      case 'rupture': return 'Rupture';
+      case 'rupture': return 'En rupture';
       case 'critique': return 'Critique';
       case 'moyen': return 'Moyen';
       case 'suffisant': return 'Suffisant';
@@ -42,7 +43,9 @@ const ProductCard = ({ produit, onViewVendor, onAddToCart }) => {
     }
   };
 
-  const stockStatus = getStockStatus(produit.stock_actuel);
+  // Utiliser le seuil critique du produit ou 3 par défaut
+  const seuilCritique = produit.seuil_critique || 3;
+  const stockStatus = getStockStatus(produit.stock_actuel, seuilCritique);
   const stockColor = getStockColor(stockStatus);
   const stockLabel = getStockLabel(stockStatus);
   const isAvailable = stockStatus !== 'rupture';
@@ -64,7 +67,7 @@ const ProductCard = ({ produit, onViewVendor, onAddToCart }) => {
           borderRadius: '12px',
           border: '1.5px solid rgba(255, 255, 255, 0.5)'
         }}>
-          {stockStatus === 'rupture' ? 'Indisponible' : `${produit.stock_actuel} ${stockLabel}`}
+          {stockStatus === 'rupture' ? 'En rupture' : `${produit.stock_actuel} ${stockLabel}`}
         </span>
       </div>
       <div className="product-card-body">
