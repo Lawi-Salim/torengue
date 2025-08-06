@@ -2,9 +2,15 @@ import React, { useState, useEffect } from 'react';
 import ReactApexChart from 'react-apexcharts';
 import apiService from '../../apiService';
 import { useAuth } from '../../context/AuthContext';
+import Spinner from '../Spinner';
+import ErrorState from '../ErrorState';
+import EmptyState from '../EmptyState';
 
 const ProduitsParCategorieChart = () => {
+  const [periode, setPeriode] = useState('semaine'); // 'semaine', 'trimestre'
   const { user, isAuthenticated } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [chartData, setChartData] = useState({
     series: [{
       name: 'Produits vendus',
@@ -13,13 +19,13 @@ const ProduitsParCategorieChart = () => {
     options: {
       chart: {
         type: 'bar',
-        height: 250,
-        toolbar: {
-          show: false
-        }
+        height: 350,
+        toolbar: { show: false },
+        fontFamily: 'Poppins, sans-serif'
       },
       plotOptions: {
         bar: {
+          distributed: true,
           horizontal: false,
           columnWidth: '55%',
           endingShape: 'rounded'
@@ -34,10 +40,7 @@ const ProduitsParCategorieChart = () => {
         colors: ['transparent']
       },
       xaxis: {
-        categories: ['Elec', 'Plom', 'Isol', 'Pein', 'Sécu', 'Bois'],
-      },
-      fill: {
-        opacity: 1
+        categories: [],
       },
       tooltip: {
         y: {
@@ -53,7 +56,7 @@ const ProduitsParCategorieChart = () => {
     }
   });
 
-    const getAbbreviation = (name) => {
+  const getAbbreviation = (name) => {
     const abbreviations = {
       'Électricité': 'Elec.',
       'Plomberie': 'Plom.',
@@ -65,52 +68,81 @@ const ProduitsParCategorieChart = () => {
     return abbreviations[name] || name;
   };
 
-  useEffect(() => {
-    // Vérifier que l'utilisateur est authentifié et a le rôle admin
-    if (!isAuthenticated || user?.role !== 'admin') {
-      console.log('Utilisateur non authentifié ou non admin');
-      return;
-    }
+  const getCategoryColor = (name) => {
+    const colors = {
+      'Électricité': '#4F46E5',
+      'Plomberie': '#0891B2',
+      'Isolation': '#D97706',
+      'Peinture': '#059669',
+      'Sécurité': '#DB2777',
+      'Bois': '#78350F'
+    };
+    return colors[name] || '#64748B';
+  };
 
+  useEffect(() => {
     const fetchProductsByCategory = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        console.log('Tentative de récupération des données produits par catégorie...');
-        const response = await apiService.get('/api/v1/dashboard/produits-par-categorie');
-        console.log('Réponse API:', response);
+        const response = await apiService.get(`/api/v1/dashboard/produits-par-categorie?periode=${periode}`);
         const data = response.data;
 
         const abbreviatedCategories = data.map(item => getAbbreviation(item.name));
         const seriesData = data.map(item => item.data);
-        const categoryColors = data.map(item => item.color);
+        const categoryColors = data.map(item => getCategoryColor(item.name));
 
-        setChartData(prevState => ({
-          ...prevState,
+        console.log('Data from API:', data);
+        console.log('Generated Colors:', categoryColors);
+
+        const newOptions = {
+          ...chartData.options,
+          colors: categoryColors,
+          xaxis: {
+            categories: abbreviatedCategories
+          }
+        };
+
+        console.log('Final Chart Options:', newOptions);
+
+        setChartData({
           series: [{
-            ...prevState.series[0],
+            name: 'Produits vendus',
             data: seriesData
           }],
-          options: {
-            ...prevState.options,
-            colors: categoryColors,
-            xaxis: {
-              ...prevState.options.xaxis,
-              categories: abbreviatedCategories
-            }
-          }
-        }));
-      } catch (error) {
-        console.error('Erreur lors de la récupération des données du graphique:', error);
-        console.error('Détails de l\'erreur:', error.response?.data);
+          options: newOptions
+        });
+      } catch (err) {
+        console.error('Erreur lors de la récupération des données du graphique:', err);
+        setError('Impossible de charger les données.');
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchProductsByCategory();
-  }, [isAuthenticated, user]);
+    if (isAuthenticated) {
+      fetchProductsByCategory();
+    }
+  }, [isAuthenticated, user, periode]);
+
+  const isDataEmpty = !chartData.series[0] || chartData.series[0].data.reduce((a, b) => a + b, 0) === 0;
 
   return (
     <div className="card">
+      <div style={{ padding: '16px', display: 'flex', gap: 8, justifyContent: 'center' }}>
+        <button className={periode === 'semaine' ? 'btn btn-primary' : 'btn'} onClick={() => setPeriode('semaine')}>Semaine</button>
+        <button className={periode === 'trimestre' ? 'btn btn-primary' : 'btn'} onClick={() => setPeriode('trimestre')}>Trimestre</button>
+      </div>
       <div className="card-body">
-        <ReactApexChart options={chartData.options} series={chartData.series} type="bar" height={250} />
+        {loading ? (
+          <Spinner />
+        ) : error ? (
+          <ErrorState title="Erreur" message={error} />
+        ) : isDataEmpty ? (
+          <EmptyState title="Aucune donnée" message="Aucun produit vendu pour cette période." />
+        ) : (
+          <ReactApexChart options={chartData.options} series={chartData.series} type="bar" height={350} />
+        )}
       </div>
     </div>
   );

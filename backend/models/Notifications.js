@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
     defaultValue: false
   },
   type_notif: {
-    type: DataTypes.ENUM('alert', 'info', 'confirmation', 'demande_vendeur', 'approbation_vendeur', 'rejet_vendeur', 'new_order', 'payment_received', 'new_product'),
+        type: DataTypes.ENUM('alert', 'info', 'confirmation', 'demande_vendeur', 'approbation_vendeur', 'rejet_vendeur', 'new_order', 'payment_received', 'new_product', 'rappel_commande'),
     allowNull: false,
     defaultValue: 'info'
   },

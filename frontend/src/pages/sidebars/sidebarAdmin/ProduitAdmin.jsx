@@ -1,5 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { FiSearch, FiPackage, FiDollarSign, FiEye, FiTrendingUp, FiTrendingDown, FiArrowLeft, FiArrowRight } from 'react-icons/fi';
+import { 
+  FiPackage, 
+  FiSearch, 
+  FiPlus, 
+  FiEdit, 
+  FiTrash2, 
+  FiChevronLeft, 
+  FiChevronRight, 
+  FiX, 
+  FiDollarSign, 
+  FiTrendingUp, 
+  FiTrendingDown, 
+  FiShoppingBag,
+  FiUser, 
+  FiMail, 
+  FiPhone, 
+  FiMapPin, 
+  FiEye, 
+  FiArrowLeft, 
+  FiArrowRight 
+} from 'react-icons/fi';
 import Spinner from '../../../components/Spinner';
 import EmptyState from '../../../components/EmptyState';
 import Modal from '../../../components/Modal';
@@ -17,55 +37,92 @@ const ProduitAdmin = () => {
   const [categories, setCategories] = useState([]);
   const [unites, setUnites] = useState([]);
   const [produits, setProduits] = useState([]);
-  const filteredProduits = produits.filter(p =>
-    p.nom.toLowerCase().includes(search.toLowerCase())
-  );
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [stockStatusFilter, setStockStatusFilter] = useState('');
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const totalPages = Math.ceil(filteredProduits.length / itemsPerPage);
-  const paginatedProduits = filteredProduits.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPages = Math.ceil(produits.length / itemsPerPage);
+  const paginatedProduits = produits.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const [loading, setLoading] = useState(true);
 
-  // Récupérer les données initiales (catégories, unités, produits)
   useEffect(() => {
-    const fetchInitialData = async () => {
-      setLoading(true);
+    const fetchCategoriesAndUnites = async () => {
       try {
-        const [produitsRes, categoriesRes, unitesRes] = await Promise.all([
-          apiService.get('/api/v1/produits/all'),
+        const [categoriesRes, unitesRes] = await Promise.all([
           apiService.get('/api/v1/categories'),
           apiService.get('/api/v1/unites')
         ]);
-        setProduits(produitsRes.data.data || []);
         setCategories(categoriesRes.data.data || []);
         setUnites(unitesRes.data.data || []);
       } catch (error) {
-        console.error('Erreur lors de la récupération des données initiales:', error);
-        setProduits([]); // Initialiser avec un tableau vide en cas d'erreur
+        console.error('Erreur lors de la récupération des catégories et unités:', error);
+      }
+    };
+    fetchCategoriesAndUnites();
+  }, []);
+
+  useEffect(() => {
+    const fetchProduits = async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (search) params.append('search', search);
+        if (categoryFilter) params.append('id_categorie', categoryFilter);
+        if (stockStatusFilter) params.append('stockStatus', stockStatusFilter);
+
+        const response = await apiService.get(`/api/v1/produits/all?${params.toString()}`);
+        setProduits(response.data.data || []);
+      } catch (error) {
+        console.error('Erreur lors de la récupération des produits:', error);
+        setProduits([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchInitialData();
-  }, []);
+    const debounceFetch = setTimeout(() => {
+        fetchProduits();
+    }, 300); // Ajoute un délai pour ne pas surcharger le serveur à chaque frappe
+
+    return () => clearTimeout(debounceFetch);
+  }, [search, categoryFilter, stockStatusFilter]);
 
   const handleViewProduit = (produit) => {
     setSelectedProduit(produit);
     setShowDetailModal(true);
   };
 
-  const getStockStatus = (stock, seuilCritique = 3) => {
+  const getCategoryColor = (categorie) => {
+    const colors = {
+      'Électricité': '#FFC107', 'Plomberie': '#00BCD4', 'Peinture': '#E91E63',
+      'Jardinage': '#4CAF50', 'Construction': '#795548', 'Sécurité': '#607D8B',
+      'Outils': '#9E9E9E', 'Décoration': '#FF5722',
+    };
+    return colors[categorie] || '#ccc';
+  };
+
+    const getStockStatus = (stock, seuilCritique = 3) => {
     if (stock <= seuilCritique) return 'critical';
     if (stock <= 10) return 'low';
-    return 'good';
+    return 'in_stock';
+  };
+
+  const getStockLabel = (status) => {
+    switch (status) {
+      case 'in_stock': return 'En stock';
+      case 'low': return 'Stock faible';
+      case 'critical': return 'Critique';
+      default: return 'Indisponible';
+    }
   };
 
   const getStockColor = (status) => {
     switch (status) {
-      case 'critical': return 'var(--red-600)';
-      case 'low': return 'var(--red-500)';
-      default: return 'var(--green-600)';
+      case 'in_stock': return 'var(--green-600)';
+      case 'low': return 'orange';
+      case 'critical': return 'var(--red-500)';
+      default: return '#6c757d';
     }
   };
 
@@ -91,15 +148,20 @@ const ProduitAdmin = () => {
               placeholder="Rechercher un produit..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              style={{ 
-                borderRadius: '4px', 
-                border: 'none',
-                fontSize: '0.874rem',
-                fontFamily: 'Poppins',
-                outline: 'none'
-              }}
             />
           </div>
+          <select className='filter-select' value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
+            <option value="">Toutes les catégories</option>
+            {categories.map(cat => (
+              <option key={cat.id_categorie} value={cat.id_categorie}>{cat.nom}</option>
+            ))}
+          </select>
+          <select className='filter-select' value={stockStatusFilter} onChange={e => setStockStatusFilter(e.target.value)}>
+            <option value="">Tous les stocks</option>
+            <option value="in_stock">En stock</option>
+            <option value="low">Stock faible</option>
+            <option value="critical">Critique</option>
+          </select>
         </div>
       </div>
       <div className="card-body">
@@ -120,6 +182,8 @@ const ProduitAdmin = () => {
                 <th>Nom</th>
                 <th>Catégorie</th>
                 <th>Prix</th>
+                <th>Boutique</th>
+                <th>Statut</th>
                 <th>Stock</th>
                 <th>Actions</th>
               </tr>
@@ -127,16 +191,15 @@ const ProduitAdmin = () => {
             <tbody>
               {paginatedProduits.map((produit) => {
                 const stockStatus = getStockStatus(produit.stock_actuel, produit.seuil_critique);
-                const stockColor =
-                  stockStatus === 'critical' ? 'var(--red-500)'
-                  : stockStatus === 'low' ? 'orange'
-                  : 'var(--green-600)';
+                const stockLabel = getStockLabel(stockStatus);
+                const stockColor = getStockColor(stockStatus);
+
                 return (
                   <tr key={produit.id_produit}>
-                    <td style={{ fontWeight: 500, color: 'var(--gray-600)' }}>N°{produit.id_produit}</td>
+                    <td style={{ fontWeight: 500, color: 'var(--gray-600)' }}><strong>PRDT-{produit.id_produit}</strong></td>
                     <td>
                       <div style={{
-                        width: '40px', height: '40px', borderRadius: '6px', overflow: 'hidden', background: 'var(--gray-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--gray-200)'
+                        width: '40px', height: '40px', borderRadius: '6px', overflow: 'hidden', background: 'var(--gray-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--gray-400)'
                       }}>
                         {produit.image ? (
                           <img src={produit.image && produit.image.startsWith('http') ? produit.image : API_IMAGE_URL + produit.image} alt={produit.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -146,15 +209,20 @@ const ProduitAdmin = () => {
                       </div>
                     </td>
                     <td style={{ fontWeight: 500, color: 'var(--gray-900)' }}>{produit.nom}</td>
-                    <td style={{ color: 'var(--primary-600)', fontWeight: 500 }}>{produit.categorie?.nom || 'Non définie'}</td>
-                    <td style={{ color: 'var(--green-600)', fontWeight: 600 }}>{parseFloat(produit.prix_unitaire).toLocaleString()} kmf</td>
                     <td>
-                      <span style={{
-                        display: 'inline-block',
-                        width: '10px', height: '10px', borderRadius: '50%', marginRight: 6,
-                        backgroundColor: stockColor, border: '1.5px solid #fff', boxShadow: '0 0 2px rgba(0,0,0,0.08)'
-                      }} />
-                      <span style={{ fontWeight: 500, color: stockColor }}>{produit.stock_actuel}</span>
+                      <span className="badge" style={{ backgroundColor: getCategoryColor(produit.categorie?.nom), color: 'white', padding: '5px 10px', borderRadius: '12px', fontSize: '0.75rem' }}>
+                        {produit.categorie?.nom || 'Non définie'}
+                      </span>
+                    </td>
+                    <td style={{ color: 'var(--green-600)', fontWeight: 600 }}>{parseFloat(produit.prix_unitaire).toLocaleString()} kmf</td>
+                    <td style={{ fontWeight: 500, color: 'var(--gray-700)' }}>{produit.vendeur?.nom_boutique || 'N/A'}</td>
+                    <td>
+                      <span className="badge" style={{ backgroundColor: stockColor, color: 'white', padding: '5px 10px', borderRadius: '12px', fontSize: '0.75rem' }}>
+                        {stockLabel}
+                      </span>
+                    </td>
+                    <td style={{ fontWeight: 500, color: stockColor }}>
+                      {produit.stock_actuel}
                     </td>
                     <td>
                       <button
@@ -255,6 +323,60 @@ const ProduitAdmin = () => {
                 </div>
               </div>
             </div>
+
+            {/* Section Informations du Vendeur */}
+            <div className="vendor-details-section" style={{ paddingTop: '1rem', marginTop: '1rem', borderTop: '1px solid var(--gray-200)' }}>
+              <h4 style={{
+                marginBottom: '1rem',
+                fontSize: '1rem',
+                fontWeight: 600,
+                color: 'var(--gray-800)',
+              }}>
+                Informations sur le Vendeur
+              </h4>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                gap: '1rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <FiShoppingBag color="var(--gray-500)" size={20} />
+                  <div>
+                    <div style={{ color: 'var(--gray-600)', fontSize: '0.85rem' }}>Boutique</div>
+                    <div style={{ fontWeight: 600, fontSize: '1rem' }}>{selectedProduit.vendeur?.nom_boutique || 'N/A'}</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <FiUser color="var(--gray-500)" size={20} />
+                  <div>
+                    <div style={{ color: 'var(--gray-600)', fontSize: '0.85rem' }}>Nom du vendeur</div>
+                    <div style={{ fontWeight: 600, fontSize: '1rem' }}>{selectedProduit.vendeur?.user?.nom || 'N/A'}</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <FiMail color="var(--gray-500)" size={20} />
+                  <div>
+                    <div style={{ color: 'var(--gray-600)', fontSize: '0.85rem' }}>Email</div>
+                    <div style={{ fontWeight: 600, fontSize: '1rem' }}>{selectedProduit.vendeur?.user?.email || 'N/A'}</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <FiPhone color="var(--gray-500)" size={20} />
+                  <div>
+                    <div style={{ color: 'var(--gray-600)', fontSize: '0.85rem' }}>Téléphone</div>
+                    <div style={{ fontWeight: 600, fontSize: '1rem' }}>{selectedProduit.vendeur?.user?.telephone || 'N/A'}</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <FiMapPin color="var(--gray-500)" size={20} />
+                  <div>
+                    <div style={{ color: 'var(--gray-600)', fontSize: '0.85rem' }}>Adresse</div>
+                    <div style={{ fontWeight: 600, fontSize: '1rem' }}>{selectedProduit.vendeur?.adresse || 'N/A'}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </Modal>
       )}

@@ -21,57 +21,73 @@ exports.createCommande = async (req, res) => {
       throw new Error('Profil client non trouvé pour cet utilisateur.');
     }
 
-    // Calculer le montant total et le nombre d'articles
-    let montantTotal = 0;
-    let nbr_article = 0;
+    // Regrouper les produits par vendeur
+    const produitsParVendeur = {};
     for (const p of produits) {
-      montantTotal += parseFloat(p.prix_unitaire) * parseInt(p.quantite);
-      nbr_article += parseInt(p.quantite);
+      const produitInfo = await Produits.findByPk(p.id_produit, { attributes: ['id_vendeur'] });
+      if (!produitInfo || !produitInfo.id_vendeur) {
+        throw new Error(`Vendeur non trouvé pour le produit ID ${p.id_produit}.`);
+      }
+      const id_vendeur = produitInfo.id_vendeur;
+      if (!produitsParVendeur[id_vendeur]) {
+        produitsParVendeur[id_vendeur] = [];
+      }
+      produitsParVendeur[id_vendeur].push(p);
     }
 
-    // Récupérer l'id_vendeur du premier produit (supposant un seul vendeur par commande)
-    const premierProduit = await Produits.findByPk(produits[0].id_produit);
-    if (!premierProduit || !premierProduit.id_vendeur) {
-        throw new Error('Vendeur non trouvé pour les produits de la commande.');
-    }
-    const id_vendeur = premierProduit.id_vendeur;
+    const commandesCrees = [];
+    let montantTotalGeneral = 0;
 
-    // Créer la commande
-    const commande = await Commandes.create({ 
-      id_client: client.id_client, 
-      id_vendeur: id_vendeur,
-      nbr_article: nbr_article
-    }, { transaction: t });
+    // Créer une commande pour chaque vendeur
+    for (const id_vendeur in produitsParVendeur) {
+      const produitsVendeur = produitsParVendeur[id_vendeur];
+      
+      let montantTotalCommande = 0;
+      let nbr_article_commande = 0;
+      for (const p of produitsVendeur) {
+        montantTotalCommande += parseFloat(p.prix_unitaire) * parseInt(p.quantite);
+        nbr_article_commande += parseInt(p.quantite);
+      }
+      montantTotalGeneral += montantTotalCommande;
 
-    // Créer les détails de la commande et notifier le vendeur
-    for (const p of produits) {
-      await DetailCommandes.create({
-        id_commande: commande.id_commande,
-        id_produit: p.id_produit,
-        quantite: p.quantite,
-        prix_unitaire: p.prix_unitaire
+      // Créer la commande
+      const commande = await Commandes.create({ 
+        id_client: client.id_client, 
+        id_vendeur: id_vendeur,
+        nbr_article: nbr_article_commande
       }, { transaction: t });
-    }
-    
-    // Notifier le vendeur une seule fois par commande
-    const vendeur = await Vendeurs.findByPk(id_vendeur);
-    if (vendeur && vendeur.id_user) {
-      await Notifications.create({
-        id_user: vendeur.id_user,
-        type_notif: 'new_order',
-        message: `Nouvelle commande N°${commande.id_commande} reçue.`
-      }, { transaction: t });
+
+      // Créer les détails de la commande
+      for (const p of produitsVendeur) {
+        await DetailCommandes.create({
+          id_commande: commande.id_commande,
+          id_produit: p.id_produit,
+          quantite: p.quantite,
+          prix_unitaire: p.prix_unitaire
+        }, { transaction: t });
+      }
+      
+      // Notifier le vendeur
+      const vendeur = await Vendeurs.findByPk(id_vendeur);
+      if (vendeur && vendeur.id_user) {
+        await Notifications.create({
+          id_user: vendeur.id_user,
+          type_notif: 'new_order',
+          message: `Nouvelle commande N°${commande.id_commande} reçue.`
+        }, { transaction: t });
+      }
+      commandesCrees.push(commande);
     }
 
-    // Décrémenter le solde du client
+    // Décrémenter le solde du client pour le montant total de toutes les commandes
     if (client) {
-      client.solde = parseFloat(client.solde) - montantTotal;
+      client.solde = parseFloat(client.solde) - montantTotalGeneral;
       await client.save({ transaction: t });
     }
 
     await t.commit();
 
-    res.status(201).json({ success: true, message: 'Commande créée avec succès.', data: commande });
+    res.status(201).json({ success: true, message: 'Commandes créées avec succès.', data: commandesCrees });
 
   } catch (error) {
     await t.rollback();
@@ -224,10 +240,11 @@ exports.validerCommande = async (req, res) => {
   }
 };
 
+
+
 exports.getCommandesVendeur = async (req, res) => {
   try {
     const id_user = req.user.id_user;
-
     const vendeur = await Vendeurs.findOne({ where: { id_user } });
 
     if (!vendeur) {
@@ -239,71 +256,46 @@ exports.getCommandesVendeur = async (req, res) => {
       order: [['date_commande', 'DESC']],
       include: [
         {
-          model: DetailCommandes,
-          as: 'details',
-          attributes: ['quantite', 'prix_unitaire'],
-          include: {
-            model: Produits,
-            as: 'produit',
-            attributes: ['nom', 'image', 'prix_unitaire'],
-            include: [
-              {
-                model: Categories,
-                as: 'categorie',
-                attributes: ['nom']
-              },
-              {
-                model: Unites,
-                as: 'unite',
-            attributes: ['nom']
-              }
-            ]
-          }
-        },
-        {
           model: Clients,
           as: 'client',
-          attributes: ['id_client'],
-          include: {
-            model: Utilisateurs,
-            as: 'user',
-            attributes: ['nom']
-          }
+          include: [{ model: Utilisateurs, as: 'user', attributes: ['nom'] }]
+        },
+        {
+          model: DetailCommandes,
+          as: 'details',
+          include: [{
+            model: Produits,
+            as: 'produit',
+            include: [{ model: Categories, as: 'categorie', attributes: ['nom'] }]
+          }]
         }
       ]
     });
 
-    const data = commandes.map(cmd => {
-      const montantTotal = (cmd.details || []).reduce((acc, detail) => {
-        return acc + (parseFloat(detail.prix_unitaire) * parseInt(detail.quantite));
-      }, 0);
+    const formattedCommandes = commandes.map(cmd => {
+      const montant_total = cmd.details.reduce((acc, detail) => acc + (parseFloat(detail.quantite) * parseFloat(detail.prix_unitaire)), 0);
+      const categorie = cmd.details && cmd.details.length > 0 && cmd.details[0].produit && cmd.details[0].produit.categorie 
+        ? cmd.details[0].produit.categorie.nom 
+        : 'N/A';
 
       return {
         id_commande: cmd.id_commande,
+        client: cmd.client ? cmd.client.user.nom : 'Client non trouvé',
+        nbr_article: cmd.nbr_article,
         date_commande: cmd.date_commande,
         statut: cmd.statut,
-        nbr_article: cmd.nbr_article,
-        montant_total: montantTotal.toFixed(2),
-        client: cmd.client && cmd.client.user ? cmd.client.user.nom : 'Client non trouvé',
-        produits: (cmd.details || []).map(d => ({
-          nom: d.produit?.nom || 'Produit non trouvé',
-          quantite: d.quantite,
-          prix_unitaire: d.prix_unitaire || 0,
-          image: d.produit?.image || 'default.jpg',
-          categorie: d.produit?.categorie?.nom || 'Non classé',
-          unite: d.produit?.unite?.nom || ''
-        }))
-      }
+        montant_total: montant_total.toFixed(2),
+        categorie: categorie
+      };
     });
 
-    res.json({ success: true, data });
+    res.json({ success: true, data: formattedCommandes });
   } catch (error) {
-    console.error('Erreur lors de la récupération des commandes vendeur:', error);
+    console.error('Erreur lors de la récupération des commandes du vendeur:', error);
     res.status(500).json({ success: false, message: 'Erreur serveur.' });
   }
 };
 
-// Nouvelle méthode pour mettre à jour le statut d'une commande
 exports.updateStatutCommande = async (req, res) => {
   console.log('=== DÉBUT UPDATE STATUT COMMANDE ===');
   console.log('ID commande:', req.params.id);
@@ -513,4 +505,241 @@ exports.updateStatutCommande = async (req, res) => {
     console.log('=== FIN UPDATE STATUT COMMANDE AVEC ERREUR ===');
     res.status(500).json({ success: false, message: 'Erreur serveur lors de la mise à jour du statut.', error: error.message, stack: error.stack });
   }
+};
+
+exports.getCommandeById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const commande = await Commandes.findByPk(id, {
+      include: [
+        {
+          model: DetailCommandes,
+          as: 'details',
+          include: [
+            {
+              model: Produits,
+              as: 'produit',
+              include: [
+                { model: Categories, as: 'categorie', attributes: ['nom'] },
+                { model: Unites, as: 'unite', attributes: ['nom'] }
+              ]
+            }
+          ]
+        },
+        {
+          model: Clients,
+          as: 'client',
+          include: [{ model: Utilisateurs, as: 'user', attributes: ['nom'] }]
+        }
+      ]
+    });
+
+  if (!commande) {
+    return res.status(404).json({ success: false, message: 'Commande non trouvée.' });
+  }
+
+  // Transformer les données pour correspondre au format attendu par le frontend
+  const formattedCommande = {
+    id_commande: commande.id_commande,
+    date_commande: commande.date_commande,
+    statut: commande.statut,
+    montant_total: commande.montant_total,
+    nbr_article: commande.nbr_article,
+    client: commande.client.user.nom,
+    produits: commande.details.map(d => ({
+      id_produit: d.produit.id_produit,
+      nom: d.produit.nom,
+      image: d.produit.image,
+      quantite: d.quantite,
+      prix_unitaire: d.prix_unitaire,
+      categorie: d.produit.categorie.nom,
+      unite: d.produit.unite.nom
+    }))
+  };
+
+  res.json({ success: true, data: formattedCommande });
+
+} catch (error) {
+  console.error('Erreur lors de la récupération de la commande:', error);
+  res.status(500).json({ success: false, message: 'Erreur serveur.' });
+}
+};
+
+exports.getRecentCommandes = async (req, res) => {
+    try {
+        const commandes = await Commandes.findAll({
+            limit: 5,
+            order: [['date_commande', 'DESC']],
+            include: [
+                {
+                    model: Clients,
+                    as: 'client',
+                    attributes: ['id_client'],
+                    include: [{
+                        model: Utilisateurs,
+                        as: 'user',
+                        attributes: ['nom']
+                    }]
+                },
+                {
+                    model: DetailCommandes,
+                    as: 'details',
+                    attributes: ['quantite', 'prix_unitaire'],
+                }
+            ],
+        });
+
+        const formattedCommandes = commandes.map(commande => {
+            const montantTotal = commande.details.reduce((acc, detail) => acc + (detail.quantite * detail.prix_unitaire), 0);
+            return {
+                id_commande: commande.id_commande,
+                statut: commande.statut,
+                client: commande.client.user.nom,
+                montantTotal
+            };
+        });
+
+        res.json({ success: true, data: formattedCommandes });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des commandes récentes:', error);
+        res.status(500).json({ success: false, message: 'Erreur serveur.' });
+    }
+};
+
+exports.getAllCommandes = async (req, res) => {
+    try {
+        const { id_categorie, statut } = req.query;
+
+        let whereClause = {};
+        if (statut) {
+            whereClause.statut = statut;
+        }
+
+        let includeOptions = [
+            {
+                model: Clients,
+                as: 'client',
+                attributes: ['id_client'],
+                include: [{
+                    model: Utilisateurs,
+                    as: 'user',
+                    attributes: ['nom', 'email']
+                }]
+            },
+            {
+                model: DetailCommandes,
+                as: 'details',
+                attributes: ['quantite', 'prix_unitaire'],
+                include: [{
+                    model: Produits,
+                    as: 'produit',
+                    attributes: ['nom'],
+                    include: [
+                        {
+                            model: Vendeurs,
+                            as: 'vendeur',
+                            attributes: ['nom_boutique']
+                        },
+                        {
+                            model: Categories,
+                            as: 'categorie',
+                            attributes: ['nom']
+                        }
+                    ]
+                }]
+            }
+        ];
+
+        if (id_categorie) {
+            includeOptions.find(i => i.as === 'details').include.find(i => i.as === 'produit').where = {
+                id_categorie: id_categorie
+            };
+            // On s'assure que la jointure est requise si on filtre dessus
+            includeOptions.find(i => i.as === 'details').required = true;
+            includeOptions.find(i => i.as === 'details').include.find(i => i.as === 'produit').required = true;
+        }
+
+                const commandes = await Commandes.findAll({
+            where: whereClause,
+            include: includeOptions,
+            order: [['date_commande', 'DESC']]
+        });
+
+        const formattedCommandes = commandes.map(commande => {
+            const montantTotal = commande.details.reduce((acc, detail) => acc + (detail.quantite * detail.prix_unitaire), 0);
+            return {
+                id_commande: commande.id_commande,
+                date_commande: commande.date_commande,
+                statut: commande.statut,
+                client: commande.client.user, // Renvoie l'objet user complet
+                boutique: commande.details[0]?.produit.vendeur.nom_boutique || 'N/A',
+                categories: commande.details.map(d => d.produit.categorie),
+                montantTotal
+            };
+        });
+
+        res.json({ success: true, data: formattedCommandes });
+    } catch (error) {
+        console.error('Erreur lors de la récupération de toutes les commandes:', error);
+        res.status(500).json({ success: false, message: 'Erreur serveur.' });
+    }
+};
+
+exports.getCommandeStatuts = (req, res) => {
+  try {
+    const statuts = Commandes.getAttributes().statut.values;
+    res.json({ success: true, data: statuts });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des statuts de commande:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur.' });
+  }
+};
+
+exports.getBestClients = async (req, res) => {
+    try {
+        const bestClients = await Clients.findAll({
+            attributes: [
+                [sequelize.fn('SUM', sequelize.literal('`commandes->details`.`quantite` * `commandes->details`.`prix_unitaire`')), 'total_depense']
+            ],
+            include: [
+                {
+                    model: Utilisateurs,
+                    as: 'user',
+                    attributes: ['nom', 'email'],
+                    required: true
+                },
+                {
+                    model: Commandes,
+                    as: 'commandes',
+                    attributes: [],
+                    required: true,
+                    where: { statut: 'livree' },
+                    include: [{
+                        model: DetailCommandes,
+                        as: 'details',
+                        attributes: [],
+                        required: true
+                    }]
+                }
+            ],
+            group: ['Clients.id_client', 'user.id_user'],
+            order: [[sequelize.literal('total_depense'), 'DESC']],
+            limit: 5,
+            subQuery: false
+        });
+
+        const formattedClients = bestClients.map(client => {
+            const totalDepense = client.get('total_depense');
+            return {
+                nom: client.user.nom,
+                email: client.user.email,
+                total_depense: parseFloat(totalDepense).toFixed(2)
+            };
+        });
+
+        res.json({ success: true, data: formattedClients });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des meilleurs clients:', error);
+        res.status(500).json({ success: false, message: 'Erreur serveur.' });
+    }
 };

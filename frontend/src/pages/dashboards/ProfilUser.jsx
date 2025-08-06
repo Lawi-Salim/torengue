@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../../components/Modal';
+import UserAvatar from '../../components/UserAvatar';
 import Spinner from '../../components/Spinner';
-import { FiMail, FiPhone, FiShoppingCart, FiUser, FiMap, FiBell, FiTrash2 } from 'react-icons/fi';
+import { FiMail, FiPhone, FiShoppingCart, FiUser, FiMap, FiEdit } from 'react-icons/fi';
 import apiService from '../../apiService';
+import { useAuth } from '../../context/AuthContext';
 import './styles.css';
 
 const ProfilUser = ({ onClose }) => {
+  const navigate = useNavigate();
+  const { user: authUser } = useAuth(); // Renommer pour éviter conflit
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -26,14 +30,12 @@ const ProfilUser = ({ onClose }) => {
     fetchProfile();
   }, []);
 
-  const getInitials = (name) => {
-    if (!name) return '';
-    // Prend la première lettre de chaque mot, ignore les espaces multiples
-    return name
-      .split(' ')
-      .filter(Boolean)
-      .map(n => n[0].toUpperCase())
-      .join('');
+  const handleEditProfile = () => {
+    if (!authUser) return;
+
+    const path = `/dashboard/${authUser.role}/settings`;
+    navigate(path);
+    onClose(); // Ferme la modale après la redirection
   };
 
   return (
@@ -42,7 +44,9 @@ const ProfilUser = ({ onClose }) => {
         <Spinner />
       ) : profile ? (
         <div className="profile-modal-content">
-          <div className="profile-avatar">{getInitials(profile.nom) || 'User'}</div>
+          <div className="profile-avatar">
+            <UserAvatar name={profile.nom} size={120} />
+          </div>
           <div className="profile-info">
             <div className="info-item">
               <div className="info-left">
@@ -109,6 +113,9 @@ const ProfilUser = ({ onClose }) => {
                 </div>
               </>
             )}
+          </div>
+          <div className="btn-edit">
+            <button className="btn btn-primary" onClick={handleEditProfile}><FiEdit /> Modifier le profil</button>
           </div>
         </div>
       ) : (

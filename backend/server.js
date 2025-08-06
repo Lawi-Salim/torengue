@@ -19,10 +19,16 @@ const userRoutes = require('./routes/user');
 const vendeurRoutes = require('./routes/vendeurs');
 const notificationRoutes = require('./routes/notificationRoutes');
 const commandesRoutes = require('./routes/commandes');
+const clientVendeurRoutes = require('./routes/clientVendeurs');
+const vendeurClientRoutes = require('./routes/vendeurClients');
+
 const pingRoutes = require('./routes/ping'); // Route ping pour UptimeRobot
 
 // Import de l'initialisation des données
 const initRailwayData = require('./scripts/init-railway-data');
+
+// Import du service de rappel
+const { startReminderService } = require('./services/reminderService');
 
 const app = express();
 
@@ -63,16 +69,13 @@ app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/vendeurs', vendeurRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/commandes', commandesRoutes);
+app.use('/api/v1/client-vendeurs', clientVendeurRoutes);
+app.use('/api/v1/vendeur-clients', vendeurClientRoutes);
 app.use('/api/v1/livraisons', require('./routes/livraisons'));
 app.use('/api/v1/factures', require('./routes/factures'));
 app.use('/api/v1/paiements', require('./routes/paiements'));
 app.use('/api/v1', pingRoutes); // Route ping pour UptimeRobot
 
-// Route de test pour vérifier que le serveur fonctionne
-app.get('/api/v1/test', (req, res) => {
-  console.log('=== TEST ROUTE APPELÉE ===');
-  res.json({ success: true, message: 'Serveur fonctionne !', timestamp: new Date().toISOString() });
-});
 
 // Gestionnaire d'erreurs global (doit être après les routes)
 app.use(errorHandler);
@@ -96,6 +99,9 @@ const startServer = async () => {
       console.warn('⚠️ Erreur lors de l\'initialisation des données de base:', initError.message);
       // Ne pas arrêter le serveur si l'initialisation échoue
     }
+
+    // Démarrer le service de rappel
+    startReminderService();
 
     app.listen(PORT, () => {
       const endTime = Date.now();

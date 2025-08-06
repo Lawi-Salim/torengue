@@ -88,9 +88,26 @@ export const AuthProvider = ({ children }) => {
       await fetchNotifications();
       
       toast.success('Connexion réussie !');
+
+      const redirectPath = localStorage.getItem('redirectPath');
+      if (redirectPath) {
+        localStorage.removeItem('redirectPath');
+        navigate(redirectPath);
+      } 
+      // Comportement par défaut si pas de redirectPath
+      // La redirection se fera dans le composant Login via le retour de la fonction
+
       return { success: true, data: { user, token: newToken } };
     } catch (error) {
       console.error('[AUTH CONTEXT] Erreur login API:', error, error.response);
+
+      // Si c'est une erreur réseau, naviguer vers la page d'erreur
+      if (error.code === 'ERR_NETWORK') {
+        toast.error('Erreur réseau. Le serveur est peut-être indisponible.');
+        navigate('/erreur'); // Redirection vers la page d'erreur
+        return { success: false, message: 'Erreur réseau' };
+      }
+
       toast.error(error.response?.data?.message || 'Erreur de connexion');
       return {
         success: false,

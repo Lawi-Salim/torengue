@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiArrowLeft, FiArrowRight } from 'react-icons/fi';
+import { FiArrowLeft, FiArrowRight, FiEye } from 'react-icons/fi';
 import './styleVendeur.css';
 import apiService from '../../../apiService';
 import { useAuth } from '../../../context/AuthContext';
@@ -8,6 +8,40 @@ import EmptyState from '../../../components/EmptyState';
 import ErrorState from '../../../components/ErrorState';
 import { toast } from 'react-hot-toast';
 import Modal from '../../../components/Modal';
+import { formatNumber } from '../../../utils/formatUtils';
+
+const categoryColors = [
+  '#FF6B6B', '#4ECDC4', '#45B7D1', '#FED766', '#2AB7CA',
+  '#F0B8B8', '#97C1A9', '#A2D5F2', '#FFD3B5', '#F6E6C2',
+  '#FF8C94', '#A8E6CF', '#D4F0F0', '#FFDAB9', '#F9EAC3'
+];
+
+const getStatusColor = (status) => {
+  switch (status) {
+    case 'en attente': return '#FFC107';
+    case 'validée': return '#17A2B8';
+    case 'en préparation': return '#6610F2';
+    case 'expédiée': return '#007BFF';
+    case 'livrée': return '#28A745';
+    case 'annulée': return '#DC3545';
+    default: return '#6C757D';
+  }
+};
+
+const getStatusLabel = (status) => {
+  if (!status) return 'Inconnu';
+  return status.charAt(0).toUpperCase() + status.slice(1);
+};
+
+const getCategoryColor = (categoryName) => {
+  if (!categoryName) return '#ccc';
+  let hash = 0;
+  for (let i = 0; i < categoryName.length; i++) {
+    hash = categoryName.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash % categoryColors.length);
+  return categoryColors[index];
+};
 
 const CommandeVendeur = () => {
   const [commandes, setCommandes] = useState([]);
@@ -18,25 +52,43 @@ const CommandeVendeur = () => {
   const itemsPerPage = 10;
   const [selectedCommande, setSelectedCommande] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState('validée');
+  const [hoveredCmdId, setHoveredCmdId] = useState(null);
 
   const paginatedCommandes = commandes.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const totalPages = Math.ceil(commandes.length / itemsPerPage);
 
   useEffect(() => {
-    const fetchCommandes = async () => {
+    const fetchCommandesAndDetails = async () => {
       try {
-        const response = await apiService.get('/api/v1/commandes/vendeur/mes-commandes');
-        setCommandes(response.data.data);
+        const listResponse = await apiService.get('/api/v1/commandes/vendeur/mes-commandes');
+        const commandesFromApi = listResponse.data.data || [];
+
+        if (commandesFromApi.length > 0) {
+          const detailPromises = commandesFromApi.map(cmd => 
+            apiService.get(`/api/v1/commandes/vendeur/${cmd.id_commande}`)
+          );
+          const detailResponses = await Promise.all(detailPromises);
+          const commandesWithDetails = detailResponses.map((res, index) => ({
+            ...commandesFromApi[index], 
+            ...res.data.data
+          }));
+          setCommandes(commandesWithDetails);
+        } else {
+          setCommandes([]);
+        }
+
       } catch (err) {
         setError(err.response?.data?.message || 'Une erreur est survenue.');
         console.error('Erreur de récupération des commandes:', err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     if (user) {
-      fetchCommandes();
+      fetchCommandesAndDetails();
     }
   }, [user]);
 
@@ -137,9 +189,10 @@ const CommandeVendeur = () => {
                 <tr>
                   <th>ID</th>
                   <th>Client</th>
-                  <th>Date</th>
-                  <th>Articles</th>
+                  <th>Catégorie</th>
                   <th>Montant</th>
+                  <th>Articles</th>
+                  <th>Date</th>
                   <th>Statut</th>
                   <th>Action</th>
                 </tr>
@@ -149,20 +202,114 @@ const CommandeVendeur = () => {
                   <tr key={cmd.id_commande}>
                     <td><strong>CMD-{cmd.id_commande}</strong></td>
                     <td>{cmd.client}</td>
-                    <td>{new Date(cmd.date_commande).toLocaleDateString()}</td>
+                    <td style={{ position: 'relative' }}>
+                    {(() => {
+                      let products = [];
+                      if (cmd.produits) {
+                        if (Array.isArray(cmd.produits)) {
+                          products = cmd.produits;
+                        } else if (Array.isArray(cmd.produits.data)) {
+                          products = cmd.produits.data;
+                        }
+                      }
+                      const uniqueCategories = [...new Map(products.map(p => [p.categorie, { nom: p.categorie }])).values()];
+                      if (uniqueCategories.length === 0) return (
+                        <span className="badge" style={{ backgroundColor: '#ccc', color: 'white', padding: '5px 10px', borderRadius: '12px', fontSize: '0.75rem' }}>
+                          N/A
+                        </span>
+                      );
+
+                      const firstCategory = uniqueCategories[0];
+                      const otherCategories = uniqueCategories.slice(1);
+                      const otherCategoriesCount = otherCategories.length;
+
+                      return (
+                        <>
+                          <span
+                            key={firstCategory.nom}
+                            className="badge"
+                            style={{
+                              backgroundColor: getCategoryColor(firstCategory.nom),
+                              color: 'white',
+                              padding: '5px 10px',
+                              borderRadius: '12px',
+                              fontSize: '0.75rem',
+                              marginRight: otherCategoriesCount > 0 ? '5px' : '0',
+                            }}
+                          >
+                            {firstCategory.nom}
+                          </span>
+                          {otherCategoriesCount > 0 && (
+                            <span 
+                              style={{ fontSize: '0.75rem', color: 'var(--gray-500)', cursor: 'pointer'}}
+                              onMouseEnter={() => setHoveredCmdId(cmd.id_commande)}
+                              onMouseLeave={() => setHoveredCmdId(null)}
+                            >
+                              +{otherCategoriesCount} autre{otherCategoriesCount > 1 ? 's' : ''}
+                            </span>
+                          )}
+                          {hoveredCmdId === cmd.id_commande && otherCategories.length > 0 && (
+                            <div style={{
+                              position: 'absolute',
+                              top: '100%',
+                              left: '50%',
+                              transform: 'translateX(-50%)',
+                              backgroundColor: 'white',
+                              border: '1px solid #ddd',
+                              borderRadius: '8px',
+                              padding: '10px',
+                              boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                              zIndex: 10,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '5px',
+                              minWidth: '150px'
+                            }}>
+                              {otherCategories.map(cat => (
+                                <span 
+                                  key={cat.nom}
+                                  className="badge"
+                                  style={{
+                                    backgroundColor: getCategoryColor(cat.nom),
+                                    color: 'white',
+                                    padding: '5px 10px',
+                                    borderRadius: '12px',
+                                    fontSize: '0.75rem',
+                                  }}
+                                >
+                                  {cat.nom}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+                    </td>
+                    <td>{formatNumber(cmd.montant_total)} kmf</td>
                     <td>{cmd.nbr_article}</td>
-                    <td>{cmd.montant_total} kmf</td>
+                    <td>{new Date(cmd.date_commande).toLocaleDateString()}</td>
                     <td>
-                      <span className={`badge bg-${cmd.statut === 'en attente' ? 'warning' : 'success'}`}>
-                        {cmd.statut}
+                      <span 
+                        className="badge"
+                        style={{
+                          backgroundColor: getStatusColor(cmd.statut),
+                          color: 'white',
+                          padding: '5px 10px',
+                          borderRadius: '12px',
+                          fontSize: '0.75rem'
+                        }}
+                      >
+                        {getStatusLabel(cmd.statut)}
                       </span>
                     </td>
                     <td>
                       <button 
-                        className="btn btn-sm btn-info"
+                        className="btn-action"
+                        title='Détails de la commande'
                         onClick={() => handleVoirDetails(cmd)}
                       >
-                        Voir
+                        <FiEye />
                       </button>
                     </td>
                   </tr>
@@ -187,35 +334,65 @@ const CommandeVendeur = () => {
           contentClassName="commande-details-modal-v2"
         >
           <div className="commande-produits-list-v2">
-            {selectedCommande.produits.map((p, index) => (
-              <div key={index} className="produit-item-v2">
-                <img 
-                  src={p.image || '/placeholder-image.png'} 
-                  alt={p.nom} 
-                  className="produit-image-v2" 
-                  onError={(e) => {
-                    e.target.src = '/placeholder-image.png';
-                  }}
-                />
-                <div className="produit-info-v2" style={{ width: '9rem' }}>
-                  <span className="produit-nom-v2">{p.nom}</span>
-                  <span className="produit-categorie-v2">{p.categorie}</span>
-                </div>
-                <div className="produit-info-v2" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                  <span className="produit-nom-v2">Unité</span>
-                  <span className="produit-unite-v2">{p.unite}</span>
-                </div>
-                <div className="produit-info-v2" style={{display: 'flex', justifyContent: 'end', alignItems: 'end' }}>
-                  <span className="produit-nom-v2">Prix unitaire</span>
-                  <span className="produit-prix-v2" style={{ fontSize: '0.95rem' }}>{Number(p.prix_unitaire)} kmf</span>
-                </div>
-              </div>
-            ))}
+            {modalLoading ? (
+              <Spinner />
+            ) : (
+              (selectedCommande.produits && selectedCommande.produits.length > 0) ? (
+                selectedCommande.produits.map((p, index) => (
+                  <div key={index} className="produit-item-v2">
+                    <img 
+                      src={p.image || '/placeholder-image.png'} 
+                      alt={p.nom} 
+                      className="produit-image-v2" 
+                      onError={(e) => {
+                        e.target.src = '/placeholder-image.png';
+                      }}
+                    />
+                    <div className="produit-info-v2" style={{ width: '9rem' }}>
+                      <span className="produit-nom-v2">{p.nom}</span>
+                      <span className="produit-categorie-v2">{p.categorie}</span>
+                    </div>
+                    <div className="produit-info-v2" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                      <span className="produit-nom-v2">Unité</span>
+                      <span className="produit-unite-v2">{p.unite}</span>
+                    </div>
+                    <div className="produit-info-v2" style={{display: 'flex', justifyContent: 'end', alignItems: 'end' }}>
+                      <span className="produit-nom-v2">Prix unitaire</span>
+                      <span className="produit-prix-v2" style={{ fontSize: '0.95rem' }}>{Number(p.prix_unitaire)} kmf</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p>Aucun produit trouvé pour cette commande.</p>
+              )
+            )}
           </div>
 
           {/* Sélecteur de statut */}
 
           <div className="modal-footer-v2">
+            <div className="commande-categories-list-v2">
+              {selectedCommande.produits && selectedCommande.produits.length > 0 ? (
+                [...new Map(selectedCommande.produits.map(p => [p.categorie, p])).values()].map((p, index) => (
+                  <span 
+                    key={index} 
+                    className="badge"
+                    style={{
+                      backgroundColor: getCategoryColor(p.categorie),
+                      color: 'white',
+                      padding: '5px 10px',
+                      borderRadius: '12px',
+                      fontSize: '0.75rem',
+                      marginRight: '5px'
+                    }}
+                  >
+                    {p.categorie}
+                  </span>
+                ))
+              ) : (
+                <span>Catégories non disponibles</span>
+              )}
+            </div>
             <div className="commande-summary-v2">
               <span>Total articles: <strong>{selectedCommande.nbr_article}</strong></span>
               <span>Montant total: <strong>{selectedCommande.montant_total} kmf</strong></span>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import ProductCarousel from '../components/Caroussel';
 import './Home.css';
 import adminDashboardImage from '../images/admin-dashboard.png';
 
@@ -49,7 +50,6 @@ const Home = () => {
             <p className="hero-subtitle">
               Gérez vos produits, vos ventes et vos clients en toute simplicité.
             </p>
-
             <div className="hero-buttons">
                 <Link to="/register" className="btn btn-primary btn-lg">
                   Commencer gratuitement
@@ -58,13 +58,21 @@ const Home = () => {
           </div>
           <div className="hero-image animate-slide-up">
             <img
-              src={adminDashboardImage} // Vous pouvez changer cette image
+              src={adminDashboardImage}
               alt="Gestion de vente"
               className="rounded-lg shadow-lg"
               onContextMenu={(e) => e.preventDefault()}
               draggable="false"
             />
           </div>
+        </section>
+
+        {/* Section du carrousel de produits */}
+        <section className="home-product-showcase">
+            <div className="container">
+                <h2 className="section-title">Nos derniers produits</h2>
+                <ProductCarousel />
+            </div>
         </section>
 
         {/* Features Section */}
@@ -142,7 +150,7 @@ const Home = () => {
           <div className="cta-content">
             <h2>Prêt à commencer?</h2>
             <p>Rejoignez notre plateforme et simplifiez votre gestion des ventes dès aujourd'hui.</p>
-              <Link to="/register" className="btn btn-primary btn-lg">
+              <Link to="" className="btn btn-primary btn-lg">
                 Commencer maintenant
               </Link>
           </div>
@@ -156,4 +164,4 @@ const Home = () => {
   );
 };
 
-export default Home; 
+export default Home;

@@ -1,4 +1,5 @@
 const { DevenirVendeurs, Utilisateurs, Vendeurs, sequelize } = require('../models');
+const { Op } = require('sequelize');
 const { createNotification } = require('./notificationController');
 const bcrypt = require('bcryptjs');
 
@@ -87,24 +88,44 @@ exports.approveDemande = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Demande non trouvée.' });
     }
 
-    // Étape 1: Chercher ou créer l'utilisateur
-    let user = await Utilisateurs.findOne({ where: { email: demande.email_pro } });
+    // Étape 1: Vérifier si un utilisateur existe déjà avec cet email ou ce téléphone
+    const existingUser = await Utilisateurs.findOne({
+      where: {
+        [Op.or]: [
+          { email: demande.email_pro },
+          sequelize.where(
+            sequelize.fn('REPLACE', sequelize.col('telephone'), ' ', ''),
+            sequelize.fn('REPLACE', demande.telephone, ' ', '')
+          )
+        ]
+      },
+      transaction: t
+    });
 
-    if (user) {
-      // L'utilisateur existe, mettre à jour son rôle en 'vendeur'
-      user.role = 'vendeur';
-      await user.save({ transaction: t });
-    } else {
-      // L'utilisateur n'existe pas, le créer
-      // Le hook beforeCreate va automatiquement hacher le mot de passe
-      user = await Utilisateurs.create({
+    if (existingUser) {
+      // Un utilisateur avec ces informations existe déjà. Rejeter la demande.
+      await demande.destroy({ transaction: t });
+      await t.commit();
+
+      // Notifier l'utilisateur existant de la tentative
+      await createNotification(
+        existingUser.id_user,
+        'alert',
+        'Une demande pour devenir vendeur a été bloquée car elle utilisait vos informations (email ou téléphone).',
+        '/dashboard/settings'
+      );
+
+      return res.status(409).json({ success: false, message: 'Un utilisateur avec cet email ou ce numéro de téléphone existe déjà. La demande a été rejetée.' });
+    }
+
+    // L'utilisateur n'existe pas, le créer
+    const user = await Utilisateurs.create({
         nom: demande.nom,
         email: demande.email_pro,
         password_hash: demande.password, // Le hook va le hacher automatiquement
         telephone: demande.telephone,
         role: 'vendeur'
       }, { transaction: t });
-    }
 
     // Étape 2: Créer l'entrée Vendeur
     await Vendeurs.create({

@@ -22,6 +22,9 @@ import PaiementAdmin from './pages/sidebars/sidebarAdmin/PaiementAdmin';
 import VenteAdmin from './pages/sidebars/sidebarAdmin/VenteAdmin';
 import DemandesVendeurs from './pages/sidebars/sidebarAdmin/DemandesVendeurs';
 import NotificationsPage from './pages/sidebars/sidebarAdmin/NotificationsPage';
+import SettingsAdmin from './pages/sidebars/sidebarAdmin/SettingsAdmin';
+import FactureAdmin from './pages/sidebars/sidebarAdmin/FactureAdmin';
+
 
 // Vendeur
 import VendeurDashboard from './pages/dashboards/Vendeur';
@@ -34,6 +37,7 @@ import CommandeVendeur from './pages/sidebars/sidebarVendeur/CommandeVendeur';
 import FactureVendeur from './pages/sidebars/sidebarVendeur/FactureVendeur';
 import StockVendeur from './pages/sidebars/sidebarVendeur/StockVendeur';
 import LivraisonVendeur from './pages/sidebars/sidebarVendeur/LivraisonVendeur';
+import SettingsVendeur from './pages/sidebars/sidebarVendeur/SettingsVendeur';
 
 // Client
 import ClientDashboard from './pages/dashboards/Client';
@@ -44,6 +48,7 @@ import CommandeClient from './pages/sidebars/sidebarClient/CommandeClient';
 import FactureClient from './pages/sidebars/sidebarClient/FactureClient';
 import VendeurFavoris from './pages/sidebars/sidebarClient/VendeurFavoris';
 import NotificationsClient from './pages/sidebars/sidebarClient/NotificationsClient';
+import SettingsClient from './pages/sidebars/sidebarClient/SettingsClient';
 
 const AppRoutes = () => {
   return (
@@ -67,6 +72,8 @@ const AppRoutes = () => {
           <Route path="paiements" element={<PaiementAdmin />} />
           <Route path="ventes" element={<VenteAdmin />} />
           <Route path="demandes-vendeurs" element={<DemandesVendeurs />} />
+          <Route path="factures" element={<FactureAdmin />} />
+          <Route path="settings" element={<SettingsAdmin />} />
         </Route>
 
         {/* Routes du vendeur */}
@@ -81,6 +88,7 @@ const AppRoutes = () => {
           <Route path="factures" element={<FactureVendeur />} />
           <Route path="stock" element={<StockVendeur />} />
           <Route path="livraisons" element={<LivraisonVendeur />} />
+          <Route path="settings" element={<SettingsVendeur />} />
         </Route>
 
         {/* Routes du client */}
@@ -93,6 +101,7 @@ const AppRoutes = () => {
           <Route path="commandes" element={<CommandeClient />} />
           <Route path="factures" element={<FactureClient />} />
           <Route path="vendeurs" element={<VendeurFavoris />} />
+          <Route path="settings" element={<SettingsClient />} />
         </Route>
 
         {/* Accès direct aux pages principales */}

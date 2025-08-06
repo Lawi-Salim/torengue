@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FiWifiOff, FiRefreshCw, FiHome } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const Error = ({ 
   title = "Erreur de connexion", 
@@ -10,60 +11,23 @@ const Error = ({
   onRetry = null // Callback pour vérifier le serveur
 }) => {
   const navigate = useNavigate();
-  const [lastPath, setLastPath] = useState('');
-
-  // Rediriger vers /erreur pour avoir la bonne URL et sauvegarder le chemin précédent
-  useEffect(() => {
-    if (window.location.pathname !== '/erreur') {
-      // Sauvegarder le chemin précédent
-      const previousPath = sessionStorage.getItem('lastPathBeforeError') || '/';
-      setLastPath(previousPath);
-      navigate('/erreur', { replace: true });
-    } else {
-      // Si on est déjà sur /erreur, récupérer le chemin sauvegardé
-      const savedPath = sessionStorage.getItem('lastPathBeforeError') || '/';
-      setLastPath(savedPath);
-    }
-  }, [navigate]);
 
   const handleRetry = async () => {
     try {
       // Vérifier si le serveur répond
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/v1/ping`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        signal: AbortSignal.timeout(5000)
-      });
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/v1/ping`);
 
       if (response.ok) {
-        // Le serveur répond, vérifier l'authentification
-        const token = localStorage.getItem('token');
-        
-        if (token) {
-          // Si connecté, aller au dashboard approprié
-          const userRole = localStorage.getItem('userRole');
-          if (userRole) {
-            navigate(`/dashboard/${userRole}`);
-          } else {
-            navigate('/dashboard/admin');
-          }
-        } else {
-          // Si pas connecté, rediriger vers la page de connexion
-          // Sauvegarder le chemin de destination pour rediriger après connexion
-          if (lastPath && lastPath.startsWith('/dashboard/')) {
-            sessionStorage.setItem('redirectAfterLogin', lastPath);
-          }
-          navigate('/login');
-        }
+        // Le serveur répond, rediriger vers la page de connexion
+        // La logique de redirection post-connexion est gérée dans AuthContext
+        navigate('/login');
       } else {
         // Le serveur ne répond toujours pas
-        alert('Le serveur ne répond toujours pas. Veuillez réessayer plus tard.');
+        toast.error('Le serveur ne répond toujours pas. Veuillez réessayer plus tard.');
       }
     } catch (error) {
       // Erreur de connexion
-      alert('Impossible de contacter le serveur. Vérifiez votre connexion.');
+      toast.error('Impossible de contacter le serveur. Vérifiez votre connexion.');
     }
   };
 

@@ -121,7 +121,7 @@
   .features {
     padding: 5rem 1rem;
     background-color: var(--gray-100);
-    border-radius: 1rem; /* --border-radius-lg */
+    border-radius: var(--border-radius); /* --border-radius-lg */
     margin: 2rem 0;
     box-shadow: var(--shadow);
   }

@@ -1,77 +1,33 @@
 /* Container for the entire notifications page */
-.notifications-page-container {
-  padding: 2rem;
-  background-color: #f9fafb;
-  min-height: 100vh;
-}
-
-/* Main title of the page */
-.notifications-page-title {
-  font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 2rem;
-  color: #111827;
-}
-
 /* List container for all notification items */
 .notifications-list-page {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem; /* Reduced gap for a tighter list */
 }
 
 /* Individual notification item */
 .notification-item-page {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  padding: 1.5rem;
+  gap: 1rem;
+  padding: 1rem;
   background-color: #ffffff;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: background-color 0.2s, box-shadow 0.2s;
+  border-radius: 0.75rem; /* Softer radius */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s, box-shadow 0.2s, transform 0.2s;
   cursor: pointer;
-  border-left: 5px solid #6366f1; /* Accent color for unread */
+  border: 1px solid transparent; /* Start with a transparent border */
+}
+
+.notification-item-page:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.07);
+  transform: translateY(-2px);
 }
 
 /* Style for read notifications */
 .notification-item-page.read {
-  background-color: #f3f4f6;
-  border-left-color: #d1d5db; /* Greyed out accent */
-}
-
-.notification-item-page:hover {
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* Icon container */
-.notification-icon-page {
-  font-size: 1.75rem;
-  color: #6366f1;
-}
-
-.notification-item-page.read .notification-icon-page {
-  color: #6b7280;
-}
-
-/* Content container */
-.notification-content-page {
-  flex-grow: 1;
-}
-
-/* Title of the notification */
-.notification-title-page {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 0.25rem 0;
-}
-
-/* Message body of the notification */
-.notification-message-page {
-  font-size: 1rem;
-  color: #4b5563;
-  margin: 0;
+  background-color: #f9fafb;
 }
 
 .notification-item-page.read .notification-title-page,
@@ -79,19 +35,78 @@
   color: #6b7280;
 }
 
-/* Date of the notification */
+/* --- Notification Icon Styling --- */
+.notification-icon-page {
+  flex-shrink: 0; /* Prevent icon from shrinking */
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.notification-icon-page svg {
+  color: #fff; /* White icon color for contrast */
+}
+
+/* --- Notification Content --- */
+.notification-content-page {
+  flex-grow: 1;
+}
+
+.notification-title-page {
+  font-size: 1rem; /* Slightly smaller title */
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.15rem 0;
+}
+
+.notification-message-page {
+  font-size: 0.9rem;
+  color: #4b5563;
+  margin: 0;
+}
+
 .notification-date-page {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: #9ca3af;
-  margin-top: 0.5rem;
+  margin-top: 0.35rem;
   display: block;
 }
 
-/* Loading container (re-using if defined elsewhere, but good to have) */
-.loading-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 50vh;
-  font-size: 1.25rem;
+/* --- Notification Icon Background Colors --- */
+.type-rappel-commande .notification-icon-page {
+  background-color: #ffc107; /* Yellow for reminders */
+}
+
+.type-new-order .notification-icon-page {
+  background-color: #007bff; /* Blue for new orders */
+}
+
+.type-approbation-vendeur .notification-icon-page {
+  background-color: #28a745; /* Green for approvals */
+}
+
+.type-rejet-vendeur .notification-icon-page,
+.type-alert .notification-icon-page {
+  background-color: #dc3545; /* Red for rejections and alerts */
+}
+
+.type-payment-received .notification-icon-page {
+  background-color: #17a2b8; /* Cyan for payments */
+}
+
+.type-new-product .notification-icon-page {
+  background-color: #6f42c1; /* Purple for new products */
+}
+
+.type-demande-vendeur .notification-icon-page {
+  background-color: #fd7e14; /* Orange for requests */
+}
+
+.type-info .notification-icon-page,
+.type-confirmation .notification-icon-page {
+  background-color: #6c757d; /* Gray for info/confirmation */
 }

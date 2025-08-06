@@ -5,6 +5,7 @@ import EmptyState from '../../../components/EmptyState';
 import ErrorState from '../../../components/ErrorState';
 import Modal from '../../../components/Modal';
 import apiService from '../../../apiService';
+import { formatNumber } from '../../../utils/formatUtils';
 
 const PaiementVendeur = () => {
   const [paiements, setPaiements] = useState([]);
@@ -78,7 +79,7 @@ const PaiementVendeur = () => {
                       </div>
                     </td>
                     <td style={{ color: 'var(--gray-900)' }}>{p.date_paiement ? new Date(p.date_paiement).toLocaleDateString() : 'N/A'}</td>
-                    <td style={{ fontWeight: 500, color: '#10b981' }}>{p.montant_paye} KMF</td>
+                    <td style={{ fontWeight: 500, color: '#10b981' }}>{formatNumber(p.montant_paye)} KMF</td>
                     <td>
                       <span className={`mode-${p.mode_paiement?.toLowerCase()}`}>
                         {p.mode_paiement || 'N/A'}
@@ -176,13 +177,13 @@ const PaiementVendeur = () => {
                   <strong>Montant payé :</strong> {selectedPaiement.montant_paye ? `${Number(selectedPaiement.montant_paye)} KMF` : 'N/A'}
                 </div>
                 <div>
-                  <strong>Facture associée :</strong> {selectedPaiement.facture ? `FACT-${selectedPaiement.facture.id_facture}` : 'N/A'}
+                  <strong>FACT associée :</strong> {selectedPaiement.id_facture ? `FACT-${selectedPaiement.id_facture}` : 'N/A'}
                 </div>
                 <div>
-                  <strong>Commande associée :</strong> {selectedPaiement.commande ? `CMD-${selectedPaiement.commande.id_commande}` : 'N/A'}
+                  <strong>CMD associée :</strong> {selectedPaiement.commande ? `CMD-${selectedPaiement.commande.id_commande}` : 'N/A'}
                 </div>
                 <div>
-                  <strong>Statut de la commande :</strong> 
+                  <strong>Statut CMD :</strong> 
                   <span className={`statut-${selectedPaiement.commande?.statut?.toLowerCase()}`}>
                     {selectedPaiement.commande?.statut || 'N/A'}
                   </span>

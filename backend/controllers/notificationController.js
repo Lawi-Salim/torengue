@@ -63,3 +63,24 @@ exports.markAsRead = async (req, res) => {
     res.status(500).send('Erreur serveur');
   }
 };
+
+exports.getReminders = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+    }
+
+    const reminders = await Notifications.findAll({
+      where: {
+        id_user: req.user.id_user,
+        type: 'rappel_commande'
+      },
+      order: [['date_notif', 'DESC']]
+    });
+
+    res.status(200).json({ success: true, data: reminders });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des rappels:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+};

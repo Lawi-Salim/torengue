@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../../../components/Modal';
-import { FiSearch, FiPlus, FiTag, FiBox, FiPackage, FiShoppingCart, FiUserCheck } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiTag, FiBox, FiPackage, FiShoppingCart, FiUserCheck, FiHeart, FiPhone, FiMail, FiMapPin, FiShoppingBag, FiUser } from 'react-icons/fi';
 import Spinner from '../../../components/Spinner';
 import EmptyState from '../../../components/EmptyState';
 import apiService from '../../../apiService';
 import { useCart } from '../../../context/CartContext';
+import { useAuth } from '../../../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import './styleClient.css';
 
@@ -91,33 +92,78 @@ const ProductCard = ({ produit, onViewVendor, onAddToCart }) => {
 
 const ProduitClient = () => {
   const [produits, setProduits] = useState([]);
+  const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [search, setSearch] = useState('');
-  const [showVendorModal, setShowVendorModal] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(null);
+  const [addingToFavoris, setAddingToFavoris] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedStock, setSelectedStock] = useState('');
   const [selectedVendor, setSelectedVendor] = useState(null);
+  const [showVendorModal, setShowVendorModal] = useState(false);
+  const [vendeursFavoris, setVendeursFavoris] = useState([]);
   const { cartItems, addToCart } = useCart();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        const catRes = await apiService.get('/api/v1/categories');
+        setCategories(catRes.data.data || []);
+      } catch (err) {
+        console.error('Failed to fetch categories', err);
+      }
+    };
+
+    const fetchVendeursFavoris = async () => {
+      if (user && user.role === 'client') {
+        try {
+          const response = await apiService.get('/api/v1/client-vendeurs');
+          setVendeursFavoris(response.data.data || []);
+        } catch (err) {
+          console.error("Erreur lors de la récupération des vendeurs favoris:", err);
+        }
+      }
+    };
+
+    fetchInitialData();
+    fetchVendeursFavoris();
+  }, [user]);
 
   useEffect(() => {
     const fetchProduits = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
-        const response = await apiService.get('/api/v1/produits/all');
-        setProduits(response.data.data || []);
+        const params = {
+          nom: search,
+          id_categorie: selectedCategory,
+          statut_stock: selectedStock
+        };
+        const response = await apiService.get('/api/v1/produits/all', { params });
+        if (response.data.success) {
+          setProduits(response.data.data);
+        } else {
+          setProduits([]);
+        }
       } catch (err) {
-        console.error("Erreur lors de la récupération des produits:", err);
-        setError('Impossible de charger les produits. Veuillez réessayer plus tard.');
+        setError('Impossible de charger les produits.');
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProduits();
-  }, []);
+    const handler = setTimeout(() => {
+      fetchProduits();
+    }, 300); // Debounce
 
-  const filteredProduits = produits.filter(produit => 
-    produit.categorie?.nom.toLowerCase().includes(search.toLowerCase())
-  );
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [search, selectedCategory, selectedStock]);
+
+
 
   const handleViewVendor = (vendeur) => {
     setSelectedVendor(vendeur);
@@ -127,6 +173,50 @@ const ProduitClient = () => {
   const handleAddToCart = (produit) => {
     addToCart(produit);
     toast.success(`Produit ajouté avec succès !`);
+  };
+
+  // Vérifier si un vendeur est déjà dans les favoris
+  const isVendeurInFavoris = (vendeurId) => {
+    return vendeursFavoris.some(favori => favori.vendeur.id_vendeur === vendeurId);
+  };
+
+  const handleAddToFavoris = async (vendeur) => {
+    if (!user) {
+      toast.error('Vous devez être connecté pour ajouter un vendeur aux favoris.');
+      return;
+    }
+
+    if (user.role !== 'client') {
+      toast.error('Seuls les clients peuvent ajouter des vendeurs aux favoris.');
+      return;
+    }
+
+    // Vérifier si le vendeur est déjà dans les favoris
+    if (isVendeurInFavoris(vendeur.id_vendeur)) {
+      toast.error('Ce vendeur est déjà dans vos favoris.');
+      return;
+    }
+
+    try {
+      setAddingToFavoris(true);
+      const response = await apiService.post('/api/v1/client-vendeurs', {
+        id_vendeur: vendeur.id_vendeur
+      });
+
+      if (response.data.success) {
+        toast.success('Vendeur ajouté aux favoris avec succès !');
+        setShowVendorModal(false);
+        // Rafraîchir la liste des favoris
+        const favorisResponse = await apiService.get('/api/v1/client-vendeurs');
+        setVendeursFavoris(favorisResponse.data.data || []);
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout aux favoris:', error);
+      const errorMessage = error.response?.data?.message || 'Erreur lors de l\'ajout aux favoris.';
+      toast.error(errorMessage);
+    } finally {
+      setAddingToFavoris(false);
+    }
   };
 
 
@@ -140,7 +230,7 @@ const ProduitClient = () => {
             <FiSearch style={{ color: '#9ca3af' }} />
             <input
               type="text"
-              placeholder="Rechercher par catégorie..."
+              placeholder="Rechercher par produit..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               style={{ 
@@ -149,10 +239,22 @@ const ProduitClient = () => {
                 fontSize: '0.874rem',
                 fontFamily: 'Poppins',
                 outline: 'none',
-                width: '12rem'
+                width: '11rem'
               }}
             />
           </div>
+          <select className='filter-select' value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
+            <option value="">Toutes les catégories</option>
+            {categories.map(cat => (
+              <option key={cat.id_categorie} value={cat.id_categorie}>{cat.nom}</option>
+            ))}
+          </select>
+          <select className='filter-select' value={selectedStock} onChange={(e) => setSelectedStock(e.target.value)}>
+            <option value="">Tous les stocks</option>
+            <option value="En stock">En stock</option>
+            <option value="Stock faible">Stock faible</option>
+            <option value="Rupture de stock">Rupture de stock</option>
+          </select>
         </div>
       </div>
       <div className="card-body">
@@ -160,9 +262,9 @@ const ProduitClient = () => {
           <Spinner />
         ) : error ? (
           <EmptyState title="Erreur" message={error} />
-        ) : filteredProduits.length > 0 ? (
+        ) : produits.length > 0 ? (
           <div className="product-grid">
-            {filteredProduits.map(produit => (
+            {produits.map(produit => (
               <ProductCard key={produit.id_produit} produit={produit} onViewVendor={handleViewVendor} onAddToCart={handleAddToCart} />
             ))}
           </div>
@@ -176,15 +278,37 @@ const ProduitClient = () => {
 
       {/* Modal Vendeur favoris */}
       {showVendorModal && selectedVendor && (
-        <Modal open={showVendorModal} onClose={() => setShowVendorModal(false)} title={`Détails du vendeur`}>
+          <Modal open={showVendorModal} onClose={() => setShowVendorModal(false)} title={`Détails du vendeur`} contentClassName="modal-vendor-favoris">
             <div className="vendor-modal-content">
-              <h4>{selectedVendor.nom_boutique}</h4>
-              <p><strong>Nom du vendeur :</strong> {selectedVendor.nom_vendeur} </p>
-              <p><strong>Contact :</strong> {selectedVendor.telephone} </p>
-              <p><strong>Email :</strong> {selectedVendor.email} </p>
-              <p><strong>Adresse de la boutique :</strong> {selectedVendor.adresse} </p>
-              <button className='btn btn-primary'><FiUserCheck /> Ajouter comme favori</button>
-            </div>
+              <h4><FiShoppingBag size={20} /> {selectedVendor.nom_boutique}</h4>
+              <p><FiUser size={16} /> <strong>Nom du vendeur :</strong> {selectedVendor.user?.nom || 'N/A'}</p>
+              <p><FiPhone size={16} /> <strong>Contact :</strong> {selectedVendor.user?.telephone || 'N/A'}</p>
+              <p><FiMail size={16} /> <strong>Email :</strong> {selectedVendor.user?.email || 'N/A'}</p>
+              <p><FiMapPin size={16} /> <strong>Adresse de la boutique :</strong> {selectedVendor.adresse || 'N/A'}</p>
+              {selectedVendor.description && (
+                <p><strong>Description :</strong> {selectedVendor.description}</p>
+              )}
+                  <button
+                className={`btn ${isVendeurInFavoris(selectedVendor.id_vendeur) ? 'btn-secondary' : 'btn-primary'}`}
+                onClick={() => handleAddToFavoris(selectedVendor)}
+                disabled={addingToFavoris || isVendeurInFavoris(selectedVendor.id_vendeur)}
+              >
+                {addingToFavoris ? (
+                  <>
+                    <Spinner size="sm" />
+                    Ajout en cours...
+                  </>
+                ) : isVendeurInFavoris(selectedVendor.id_vendeur) ? (
+                  <>
+                    <FiHeart /> Déjà dans vos favoris
+              </>
+            ) : (
+                  <>
+                    <FiHeart /> Ajouter comme favori
+                  </>
+                )}
+              </button>
+          </div>
         </Modal>
       )}
 

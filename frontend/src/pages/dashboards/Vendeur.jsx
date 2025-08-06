@@ -1,17 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Headbar from './Headbar';
-import VenteAdmin from '../sidebars/sidebarAdmin/VenteAdmin';
-import DemandesVendeurs from '../sidebars/sidebarAdmin/DemandesVendeurs';
-import HomeAdmin from '../sidebars/sidebarAdmin/HomeAdmin';
+
+import { FiMenu } from 'react-icons/fi';
 
 const Vendeur = () => {
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!isSidebarOpen);
+  };
+
   return (
     <div className="flex h-screen bg-gray-100 font-family-karla">
-      <Sidebar />
+      <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Headbar />
+        <Headbar>
+                    <button onClick={toggleSidebar} className="sidebar-toggle-open">
+            <FiMenu size={24} />
+          </button>
+        </Headbar>
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-200">
           <Outlet />
         </main>

@@ -1,4 +1,4 @@
-const { Factures, Ventes, Commandes, Clients, Utilisateurs, Vendeurs, DetailVentes, Produits, sequelize } = require('../models');
+const { Factures, Ventes, Commandes, Clients, Utilisateurs, Vendeurs, DetailVentes, DetailCommandes, Produits, sequelize } = require('../models');
 
 // Fonction pour créer une facture pour une vente
 exports.createFactureFromVente = async (vente, commande, transaction) => {
@@ -79,36 +79,41 @@ exports.getFactureDetails = async (req, res) => {
           as: 'vente',
           include: [
             {
-              model: Clients,
-              as: 'client',
-              include: [{
-                model: Utilisateurs,
-                as: 'user',
-                attributes: ['nom', 'email', 'telephone'] 
-              }]
-            },
-            {
               model: Vendeurs,
               as: 'vendeur',
-              include: [{
+              include: {
                 model: Utilisateurs,
                 as: 'user',
-                attributes: ['nom', 'email', 'telephone'] // Ajout de 'telephone'
-              }]
+                attributes: ['nom', 'email', 'telephone'],
+              },
+            },
+          ],
+        },
+        {
+          model: Commandes,
+          as: 'commande',
+          include: [
+            {
+              model: Clients,
+              as: 'client',
+              include: {
+                model: Utilisateurs,
+                as: 'user',
+                attributes: ['nom', 'email', 'telephone'],
+              },
             },
             {
-              model: DetailVentes,
+              model: DetailCommandes,
               as: 'details',
-              include: [{
+              include: {
                 model: Produits,
                 as: 'produit',
-                attributes: ['nom', 'prix_unitaire'] 
-              }],
-              attributes: ['id_vente', 'id_produit', 'quantite_vendue', 'prix_unitaire'],
-            }
-          ]
-        }
-      ]
+                attributes: ['nom', 'description', 'image'],
+              },
+            },
+          ],
+        },
+      ],
     });
 
     if (!facture) {
@@ -118,6 +123,70 @@ exports.getFactureDetails = async (req, res) => {
     res.json({ success: true, data: facture });
   } catch (error) {
     console.error('Erreur lors de la récupération des détails de la facture:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur.' });
+  }
+};
+
+exports.getAllFactures = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    const { count, rows: factures } = await Factures.findAndCountAll({
+      limit,
+      offset,
+      include: [
+        {
+          model: Ventes,
+          as: 'vente',
+          attributes: ['id_vente'],
+          include: [
+            {
+              model: Vendeurs,
+              as: 'vendeur',
+              attributes: ['id_vendeur', 'nom_boutique'],
+              include: {
+                model: Utilisateurs,
+                as: 'user',
+                attributes: ['nom'],
+              },
+            },
+          ],
+        },
+        {
+          model: Commandes,
+          as: 'commande',
+          attributes: ['id_commande'],
+          include: [
+            {
+              model: Clients,
+              as: 'client',
+              attributes: ['id_client'],
+              include: {
+                model: Utilisateurs,
+                as: 'user',
+                attributes: ['nom'],
+              },
+            },
+          ],
+        },
+      ],
+      order: [['date_creation', 'DESC']],
+      distinct: true,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: factures,
+      pagination: {
+        totalItems: count,
+        totalPages: Math.ceil(count / limit),
+        currentPage: page,
+      },
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération de toutes les factures :', error);
     res.status(500).json({ success: false, message: 'Erreur serveur.' });
   }
 }; 

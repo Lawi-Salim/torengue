@@ -26,7 +26,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     telephone: {
       type: DataTypes.STRING(20),
-      allowNull: true
+      allowNull: true,
+      unique: true,
+      validate: {
+        notEmpty: true
+      }
     },
     role: {
       type: DataTypes.ENUM('admin', 'vendeur', 'client'),
@@ -37,6 +41,16 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
       field: 'date_inscription'
+    },
+    rappels_actives: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    },
+    rappel_horaire: {
+      type: DataTypes.ENUM('matin', 'soir', 'nuit'),
+      allowNull: false,
+      defaultValue: 'soir'
     }
   }, {
     tableName: 'Utilisateurs',

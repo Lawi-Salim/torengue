@@ -1,3 +1,7 @@
+input{
+  font-family: var(--font-family);
+}
+
 .sidebar {
   width: 240px;
   height: 100vh;
@@ -132,6 +136,12 @@
   z-index: 10;
 }
 
+.headbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .headbar-title {
   font-size: 1.3rem;
   font-weight: 700;
@@ -203,8 +213,8 @@
 }
 .headbar-dropdown {
   position: absolute;
-  top: 110%;
-  right: 10px;
+  top: 116%;
+  right: 16px;
   min-width: 180px;
   background: #fff;
   box-shadow: var(--shadow-lg);
@@ -576,4 +586,182 @@
   color: #9ca3af;
 }
 
+/* Styles pour la page de Paramètres */
+.settings-page .card-body {
+  padding: 2rem;
+}
 
+.settings-content {
+  display: flex;
+  gap: 3rem;
+  align-items: flex-start;
+}
+
+.settings-avatar {
+  flex-basis: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.settings-avatar h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--gray-800);
+}
+
+.badge-role {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: white;
+  text-transform: capitalize;
+}
+
+.role-admin {
+  background-color: var(--red-500);
+}
+
+.role-vendeur {
+  background-color: var(--primary-500);
+}
+
+.role-client {
+  background-color: var(--green-500);
+}
+
+.settings-form {
+  flex: 1;
+}
+
+.settings-form h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--gray-600);
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--gray-300);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.form-actions {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-edit {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .settings-content {
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .settings-form {
+    width: 100%;
+  }
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 1rem;
+  margin-bottom: 1rem;
+}
+
+.sidebar-close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: none; /* Caché par défaut */
+}
+
+.sidebar-toggle-open {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--primary-700);
+    display: none; /* Caché par défaut, affiché via media query */
+}
+
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 998;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+
+.sidebar-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: -260px; /* Caché par défaut */
+    top: 0;
+    height: 100%;
+    z-index: 999;
+    transition: left 0.3s ease-in-out;
+    box-shadow: 0 0 20px rgba(0,0,0,0.2);
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  .sidebar-close-btn, .sidebar-toggle-open {
+    display: block;
+  }
+
+  .headbar {
+    padding: 1.2rem 1.5rem;
+  }
+}

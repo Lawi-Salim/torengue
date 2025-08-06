@@ -25,15 +25,17 @@ const FactureView = () => {
   if (loading) return <div>Chargement...</div>;
   if (error || !facture) return <div>{error || 'Facture introuvable.'}</div>;
 
+
+
   // Mapping des données pour le composant Factures
-  const vente = facture.vente || {};
-  const client = vente.client || {};
-  const vendeur = vente.vendeur || {};
-  const lignes = (vente.details || []).map(d => ({
+  const commande = facture.commande || {};
+  const client = commande.client || {};
+  const vendeur = facture.vente?.vendeur || {};
+  const lignes = (commande.details || []).map(d => ({
     desc: d.produit?.nom || 'Produit',
     pu: `${d.prix_unitaire} KMF`,
-    qte: d.quantite_vendue,
-    total: `${(d.prix_unitaire * d.quantite_vendue).toFixed(2)} KMF`
+    qte: d.quantite,
+    total: `${(d.prix_unitaire * d.quantite).toFixed(2)} KMF`
   }));
 
   return (

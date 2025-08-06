@@ -14,6 +14,7 @@ router.route('/')
   .get(protect, authorize('vendeur', 'admin'), getAllVentes)
   .post(protect, authorize('vendeur', 'admin'), createVente);
 
+
 router.route('/:id')
   .get(protect, authorize('vendeur', 'admin'), getVente)
   .put(protect, authorize('vendeur', 'admin'), updateVente)

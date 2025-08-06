@@ -10,7 +10,8 @@ import {
   FiUserCheck, 
   FiUserX, 
   FiPackage,
-  FiAlertTriangle
+  FiAlertTriangle,
+  FiClock
 } from 'react-icons/fi';
 import '../sidebarAdmin/NotificationsPage.css';
 
@@ -28,6 +29,8 @@ const getNotificationDetails = (notification) => {
       return { icon: <FiCreditCard />, title: 'Paiement Reçu' };
     case 'new_product':
       return { icon: <FiPackage />, title: 'Nouveau Produit' };
+    case 'rappel_commande':
+      return { icon: <FiClock />, title: 'Rappel de Commande' };
     case 'alert':
       return { icon: <FiAlertTriangle />, title: 'Alerte' };
     case 'info':
@@ -39,9 +42,11 @@ const getNotificationDetails = (notification) => {
 
 const NotificationItem = ({ notification, onClick }) => {
   const { icon, title } = getNotificationDetails(notification);
+  const typeClass = `type-${notification.type_notif.replace('_', '-')}`;
+
   return (
     <div 
-      className={`notification-item-page ${notification.notif_lu ? 'read' : ''}`}
+      className={`notification-item-page ${notification.notif_lu ? 'read' : ''} ${typeClass}`}
       onClick={() => onClick(notification.id_notif)}
     >
       <div className="notification-icon-page">{icon}</div>

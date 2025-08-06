@@ -196,6 +196,42 @@ L’application utilise les tables suivantes :
 
 ---
 
+## 🌟 Améliorations Futures
+
+### Notifications Polymorphes
+
+Actuellement, le système de notifications est directement lié à un `Utilisateur`, ce qui est la base. Cependant, pour rendre les notifications plus interactives et informatives (par exemple, cliquables pour rediriger vers une commande ou un produit spécifique), une évolution future pourrait consister à implémenter des **associations polymorphes**.
+
+**Concept :**
+Ajouter deux colonnes à la table `Notifications` :
+1.  `related_entity_type` (STRING) : Stockerait le nom du modèle concerné (ex: `'commande'`, `'produit'`).
+2.  `related_entity_id` (INTEGER) : Stockerait l'ID de l'enregistrement dans cette table (ex: l'ID de la commande, l'ID du produit).
+
+**Avantages :**
+- **Notifications Cliquables :** Permet de créer des liens directs vers les ressources concernées.
+- **Données Structurées :** Facilite la récupération d'informations détaillées sur l'objet de la notification.
+- **Évolutivité :** Simplifie l'ajout de nouveaux types de notifications sans modifier la structure de la base de données.
+
+---
+
+### Facturation des commissions de la plateforme
+
+Pour monétiser la plateforme, un système de facturation des commissions pour les vendeurs pourrait être mis en place. Cela impliquerait :
+
+1.  **Calcul des commissions** : Définir un pourcentage de commission sur chaque vente.
+2.  **Facturation périodique** : Générer des factures (par exemple, mensuelles) pour les vendeurs, détaillant les commissions dues à la plateforme.
+3.  **Interface de gestion** : Permettre aux vendeurs de consulter leurs factures de commission et leur statut de paiement.
+
+### Vue de facturation pour l'administrateur
+
+Pour améliorer la gestion et le support, une page dédiée à la facturation pour l'administrateur est fortement recommandée. Cette page permettrait à l'administrateur de :
+
+-   **Consulter toutes les factures** générées sur la plateforme entre les vendeurs et les clients.
+-   **Rechercher et filtrer** les factures par date, vendeur, client, etc.
+-   **Télécharger** n'importe quelle facture pour le support client ou la comptabilité.
+
+---
+
 ## 🤝 Contribution
 1. Fork le projet
 2. Crée une branche feature (`git checkout -b feature/NouvelleFonctionnalite`)

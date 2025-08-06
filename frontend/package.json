@@ -10,6 +10,8 @@
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {
+    "@dicebear/core": "^9.2.3",
+    "@dicebear/micah": "^9.2.3",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.2.0",
@@ -18,9 +20,14 @@
     "apexcharts": "^5.2.0",
     "axios": "^1.6.2",
     "clsx": "^2.0.0",
+    "date-fns": "^4.1.0",
+    "jspdf": "^3.0.1",
+    "jspdf-autotable": "^5.0.2",
     "material-react-table": "^3.2.1",
     "react": "18.2.0",
     "react-apexcharts": "^1.7.0",
+    "react-avatar": "^5.0.4",
+    "react-datepicker": "^8.4.0",
     "react-dom": "18.2.0",
     "react-hook-form": "^7.48.2",
     "react-hot-toast": "^2.4.1",
@@ -28,8 +35,9 @@
     "react-query": "^3.39.3",
     "react-router-dom": "^6.20.1",
     "react-scripts": "5.0.1",
-    "react-to-print": "^3.1.1",
-    "react-toastify": "^11.0.5"
+    "react-slick": "^0.30.3",
+    "react-toastify": "^11.0.5",
+    "slick-carousel": "^1.8.1"
   },
   "devDependencies": {
     "@types/react": "^18.2.37",

@@ -93,7 +93,8 @@ const ProduitVendeur = () => {
           apiService.get(`/api/v1/produits/vendeur/${vendeurId}`),
           new Promise(resolve => setTimeout(resolve, 1500)) // Délai de 1.5s
         ]);
-        setProduits(res.data.data || []);
+        const sortedProduits = (res.data.data || []).sort((a, b) => b.id_produit - a.id_produit);
+        setProduits(sortedProduits);
       } catch (error) {
         console.error('Erreur lors de la récupération des produits:', error);
         setProduits([]);
@@ -613,7 +614,8 @@ const ProduitVendeur = () => {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
-                      transition: 'all 0.2s'
+                      transition: 'all 0.2s',
+                      fontFamily: 'Poppins'
                     }}
                   >
                     <FiEdit size={16} />
@@ -661,7 +663,7 @@ const ProduitVendeur = () => {
                     <td style={{ fontWeight: 500, color: 'var(--gray-600)' }}>N°{produit.id_produit}</td>
                     <td>
                       <div style={{
-                        width: '40px', height: '40px', borderRadius: '6px', overflow: 'hidden', background: 'var(--gray-100)', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        width: '40px', height: '40px', borderRadius: '6px', overflow: 'hidden', background: 'var(--gray-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--gray-400)'
                       }}>
                         {produit.image ? (
                           (() => {

@@ -48,6 +48,12 @@ module.exports = (sequelize, DataTypes) => {
     Vendeurs.hasMany(models.Produits, { foreignKey: 'id_vendeur', as: 'produits' });
     Vendeurs.hasMany(models.Commandes, { foreignKey: 'id_vendeur', as: 'commandes' });
     Vendeurs.hasMany(models.Ventes, { foreignKey: 'id_vendeur', as: 'ventes' });
+    Vendeurs.belongsToMany(models.Clients, { 
+      through: models.ClientVendeurs, 
+      foreignKey: 'id_vendeur',
+      otherKey: 'id_client',
+      as: 'clientsFavoris'
+    });
   };
 
   return Vendeurs;

@@ -27,6 +27,12 @@ module.exports = (sequelize, DataTypes) => {
     Clients.belongsTo(models.Utilisateurs, { foreignKey: 'id_user', as: 'user' });
     Clients.hasMany(models.Commandes, { foreignKey: 'id_client', as: 'commandes' });
     Clients.hasMany(models.Ventes, { foreignKey: 'id_client', as: 'ventes' });
+    Clients.belongsToMany(models.Vendeurs, { 
+      through: models.ClientVendeurs, 
+      foreignKey: 'id_client',
+      otherKey: 'id_vendeur',
+      as: 'vendeursFavoris'
+    });
   };
 
   return Clients;

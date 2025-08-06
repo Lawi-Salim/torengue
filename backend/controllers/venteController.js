@@ -1,4 +1,4 @@
-const { Ventes, DetailCommandes, DetailVentes } = require('../models');
+const { Ventes, DetailCommandes, DetailVentes, Clients, Vendeurs, Utilisateurs, Produits, sequelize } = require('../models');
 
 // Fonction pour créer une vente à partir d'une commande
 exports.createVenteFromCommande = async (commande, transaction) => {
@@ -36,17 +36,72 @@ exports.createVenteFromCommande = async (commande, transaction) => {
 
 exports.getAllVentes = async (req, res) => {
   try {
+    const { role, id_user } = req.user;
+    let whereClause = {};
+
+    if (role === 'vendeur') {
+      const vendeur = await Vendeurs.findOne({ where: { id_user } });
+      if (!vendeur) {
+        return res.status(404).json({ success: false, message: 'Profil vendeur non trouvé.' });
+      }
+      whereClause.id_vendeur = vendeur.id_vendeur;
+    }
+
     const ventes = await Ventes.findAll({
-      attributes: ['id_vente', 'date', 'montant_total'],
-      order: [['date', 'ASC']]
+      where: whereClause,
+      include: [
+        {
+          model: Clients,
+          as: 'client',
+          include: [{ model: Utilisateurs, as: 'user', attributes: ['nom'] }]
+        },
+        {
+          model: Vendeurs,
+          as: 'vendeur',
+          attributes: ['nom_boutique']
+        }
+      ],
+      order: [['date', 'DESC']]
     });
+
     res.json({ success: true, data: ventes });
   } catch (error) {
+    console.error('Erreur lors de la récupération des ventes :', error);
     res.status(500).json({ success: false, message: 'Erreur serveur.' });
   }
 };
-exports.getVente = (req, res) => {
-  res.json({ success: true, message: 'getVente (à implémenter)' });
+exports.getVente = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const vente = await Ventes.findByPk(id, {
+      include: [
+        {
+          model: Clients,
+          as: 'client',
+          include: [{ model: Utilisateurs, as: 'user', attributes: ['nom', 'email', 'telephone'] }]
+        },
+        {
+          model: Vendeurs,
+          as: 'vendeur',
+          include: [{ model: Utilisateurs, as: 'user', attributes: ['nom', 'email', 'telephone'] }]
+        },
+        {
+          model: DetailVentes,
+          as: 'details',
+          include: [{ model: Produits, as: 'produit', attributes: ['nom', 'image'] }]
+        }
+      ]
+    });
+
+    if (!vente) {
+      return res.status(404).json({ success: false, message: 'Vente non trouvée.' });
+    }
+
+    res.json({ success: true, data: vente });
+  } catch (error) {
+    console.error('Erreur lors de la récupération de la vente :', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur.' });
+  }
 };
 exports.createVente = (req, res) => {
   res.json({ success: true, message: 'createVente (à implémenter)' });

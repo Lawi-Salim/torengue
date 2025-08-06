@@ -28,8 +28,8 @@ module.exports = (sequelize, DataTypes) => {
 });
 
   ClientVendeurs.associate = (models) => {
-    ClientVendeurs.belongsTo(models.Clients, { foreignKey: 'id_client' });
-    ClientVendeurs.belongsTo(models.Vendeurs, { foreignKey: 'id_vendeur' });
+    ClientVendeurs.belongsTo(models.Clients, { foreignKey: 'id_client', as: 'client' });
+    ClientVendeurs.belongsTo(models.Vendeurs, { foreignKey: 'id_vendeur', as: 'vendeur' });
   };
 
   return ClientVendeurs;

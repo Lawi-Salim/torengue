@@ -1,20 +1,21 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+
 import toast from 'react-hot-toast';
 import apiService from '../../../apiService';
 import Spinner from '../../../components/Spinner';
-import { FiPlus, FiCheckCircle, FiXCircle, FiArrowLeft, FiArrowRight } from 'react-icons/fi';
-import { 
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  getPaginationRowModel,
-  useReactTable
-} from '@tanstack/react-table';
+import { FiPlus, FiArrowLeft, FiArrowRight } from 'react-icons/fi';
+import UserAvatar from '../../../components/UserAvatar';
+import UserDetailsModal from './UserDetailsModal';
+
 import './styleAdmin.css';
 
 const ListeUtilisateur = () => {
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+    const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   const token = localStorage.getItem('token');
 
   const fetchData = async () => {
@@ -39,6 +40,16 @@ const ListeUtilisateur = () => {
     }
   }, [token]);
 
+  const handleOpenModal = (user) => {
+    setSelectedUser(user);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedUser(null);
+  };
+
   const handleApprove = async (vendeurId) => {
     try {
       await apiService.put(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/vendeurs/${vendeurId}/approve`, {}, { headers: { Authorization: `Bearer ${token}` } });
@@ -61,49 +72,11 @@ const ListeUtilisateur = () => {
     }
   };
 
-  const columns = useMemo(() => [
-    {
-      header: 'User ID',
-      accessorKey: 'id_user',
-      cell: ({ row }) => (<strong>{`N°${row.original.id_user}`}</strong>)
-    },
-    { header: 'Nom', accessorKey: 'nom' },
-    { header: 'Email', accessorKey: 'email' },
-    { header: 'Téléphone', accessorKey: 'telephone' },
-    {
-      header: 'Adresse',
-      accessorKey: 'adresse',
-      cell: ({ row }) => {
-        const { role, vendeur, client } = row.original;
-        if (role === 'vendeur' && vendeur) {
-          return vendeur.adresse;
-        }
-        if (role === 'client' && client) {
-          return client.adresse_facturation;
-        }
-        return 'N/A';
-      }
-    },
-    {
-      header: 'Date de création',
-      accessorKey: 'date_inscription',
-      cell: ({ row }) => {
-        const { date_inscription } = row.original;
-        return date_inscription ? new Date(date_inscription).toLocaleDateString() : '-';
-      }
-    }
-  ], []);
-
-  const table = useReactTable({
-    data: users,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: { pagination: { pageSize: 10 } }
-  });
-
-
+    // Pagination logic
+  const indexOfLastUser = currentPage * itemsPerPage;
+  const indexOfFirstUser = indexOfLastUser - itemsPerPage;
+  const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(users.length / itemsPerPage);
 
   return (
     <div className="card-user">
@@ -118,37 +91,56 @@ const ListeUtilisateur = () => {
           {loading ? (
             <Spinner />
           ) : (
-          <>
           <table className="user-table">
             <thead className="user-thead">
-              {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map(header => (
-                    <th key={header.id} onClick={header.column.getToggleSortingHandler()}>
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      {{ asc: ' 🔼', desc: ' 🔽' }[header.column.getIsSorted()] ?? null}
-                    </th>
-                  ))}
-                </tr>
-              ))}
+              <tr>
+                <th>Avatar</th>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Téléphone</th>
+                <th>Adresse</th>
+                <th>Date de création</th>
+                <th>Actions</th>
+              </tr>
             </thead>
             <tbody>
-              {table.getRowModel().rows.map(row => (
-                <tr key={row.id}>
-                  {row.getVisibleCells().map(cell => (
-                    <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                  ))}
+              {currentUsers.map((user) => (
+                <tr key={user.id_user}>
+                  <td><UserAvatar name={user.nom} /></td>
+                  <td>{user.nom}</td>
+                  <td>{user.email}</td>
+                  <td>{user.telephone}</td>
+                  <td>
+                    {(() => {
+                      const { role, vendeur, client } = user;
+                      if (role === 'vendeur' && vendeur) return vendeur.adresse;
+                      if (role === 'client' && client) return client.adresse_facturation;
+                      return 'N/A';
+                    })()}
+                  </td>
+                  <td>{user.date_inscription ? new Date(user.date_inscription).toLocaleDateString() : '-'}</td>
+                  <td>
+                    <button className="btn btn-sm btn-outline-primary" onClick={() => handleOpenModal(user)}>
+                      Détails
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <div className="pagination-controls pagination-center">
-              <button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>{ <FiArrowLeft/> }</button>
-              <span>Page {table.getState().pagination.pageIndex + 1} sur {table.getPageCount()}</span>
-              <button onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>{ <FiArrowRight/> }</button>
-          </div>
-          </>
           )}
+          {users.length > itemsPerPage && (
+            <div className="pagination-controls pagination-center">
+                <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="btn-paginate"><FiArrowLeft/></button>
+                <span className="pagination-info">Page {currentPage} sur {totalPages}</span>
+                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="btn-paginate"><FiArrowRight/></button>
+            </div>
+          )}
+          <UserDetailsModal 
+            user={selectedUser}
+            isOpen={isModalOpen}
+            onClose={handleCloseModal}
+          />
       </div>  
     </div>
   );

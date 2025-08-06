@@ -2,13 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import Spinner from '../../../components/Spinner';
 import EmptyState from '../../../components/EmptyState';
-import {
-  useReactTable,
-  getCoreRowModel,
-  getPaginationRowModel,
-  getFilteredRowModel,
-  flexRender,
-} from '@tanstack/react-table';
+
 import apiService from '../../../apiService';
 import './styleAdmin.css'; 
 import toast from 'react-hot-toast';
@@ -26,17 +20,17 @@ const DemandesVendeurs = () => {
       const { data } = await apiService.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/v1/demandes-vendeur`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-                  setDemandes(data.data);
+      setDemandes(data.data);
     } catch (error) {
       console.error('Erreur lors de la récupération des demandes:', error);
-        if (error.response && error.response.status === 401) {
-          toast.dismiss();
-          toast.error('Votre session a expiré. Veuillez vous reconnecter.');
-          logout();
-        } else {
-          toast.dismiss();
-          toast.error('Impossible de charger les demandes.');
-        }
+      if (error.response && error.response.status === 401) {
+        toast.dismiss();
+        toast.error('Votre session a expiré. Veuillez vous reconnecter.');
+        logout();
+      } else {
+        toast.dismiss();
+        toast.error('Impossible de charger les demandes.');
+      }
     } finally {
       setLoading(false);
     }
@@ -66,64 +60,13 @@ const DemandesVendeurs = () => {
       await apiService.put(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/v1/demandes-vendeur/${id}/reject`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.warn('Demande rejetée.');
+      toast.error('La demande a été rejetée.');
       fetchDemandes(); // Recharger la liste
     } catch (error) {
       console.error('Erreur lors du rejet de la demande:', error);
       toast.error('Le rejet a échoué.');
     }
   };
-
-  const columns = useMemo(
-    () => [
-      { accessorKey: 'nom', header: 'Nom' },
-      { accessorKey: 'email_pro', header: 'Email' },
-      { accessorKey: 'nom_boutique', header: 'Nom de la boutique' },
-      {
-        id: 'actions',
-        header: 'Actions',
-        cell: ({ row }) => (
-          <div className="action-buttons">
-            <button 
-              onClick={() => handleApprove(row.original.id_devenirvendeur)}
-              disabled={loading}
-              className="btn-approve"
-            >
-              {loading ? (
-                <>
-                  <Spinner size={15} inline={true} />
-                </>
-              ) : (
-                <FiCheckCircle size={14.9} />
-              )}
-            </button>
-            <button 
-              onClick={() => handleReject(row.original.id_devenirvendeur)}
-              className="btn-reject"
-            >
-              <FiXCircle size={14.9} />
-            </button>
-          </div>
-        ),
-      },
-    ],
-    [handleApprove, handleReject]
-  );
-
-  const table = useReactTable({
-    data: demandes,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 10,
-      },
-    },
-  });
-
-
 
   return (
     <div className="card-user">
@@ -134,38 +77,56 @@ const DemandesVendeurs = () => {
         {loading ? (
           <Spinner />
         ) : demandes.length === 0 ? (
-        <EmptyState 
-          title="Liste des demandes vendeurs"
-          message="Aucune demande n'a été envoyée pour le moment."
-        />
-      ) : (
-        <div className="table-container">
-          <table className="user-table">
-            <thead>
-              {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map(header => (
-                    <th key={header.id}>
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                    </th>
-                  ))}
+          <EmptyState 
+            title="Liste des demandes vendeurs"
+            message="Aucune demande n'a été envoyée pour le moment."
+          />
+        ) : (
+          <div className="user-table">
+            <table className="user-thead">
+              <thead>
+                <tr>
+                  <th>Nom du demandeur</th>
+                  <th>Email</th>
+                  <th>Nom de la boutique</th>
+                  <th>Statut</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </thead>
-            <tbody>
-              {table.getRowModel().rows.map(row => (
-                <tr key={row.id}>
-                  {row.getVisibleCells().map(cell => (
-                    <td key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              </thead>
+              <tbody>
+                {demandes.map((demande) => (
+                  <tr key={demande.id_devenirvendeur}>
+                    <td>{demande.nom}</td>
+                    <td>{demande.email_pro}</td>
+                    <td>{demande.nom_boutique}</td>
+                    <td>
+                      <span className={`status-badge status-${demande.statut.toLowerCase()}`}>
+                        {demande.statut}
+                      </span>
                     </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+                    <td>
+                      <div className="action-buttons">
+                        <button 
+                          onClick={() => handleApprove(demande.id_devenirvendeur)}
+                          disabled={loading}
+                          className="btn-approve"
+                        >
+                          {loading ? <Spinner size={15} inline={true} /> : <FiCheckCircle size={14.9} />}
+                        </button>
+                        <button 
+                          onClick={() => handleReject(demande.id_devenirvendeur)}
+                          className="btn-reject"
+                        >
+                          <FiXCircle size={14.9} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

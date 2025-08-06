@@ -10,7 +10,7 @@ import { FiMail, FiPhone, FiUser, FiMap, FiShoppingCart, FiBell, FiTrash2 } from
 import ProfilUser from './ProfilUser';
 import toast from 'react-hot-toast';
 
-const Headbar = () => {
+const Headbar = ({ children }) => {
   const { user, logout, notifications, unreadCount, markNotificationAsRead } = useAuth();
   const { cartItems, removeFromCart, updateCartQuantity, openCartModal, showCartModal, closeCartModal, clearCart } = useCart();
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ const Headbar = () => {
   const [loading, setLoading] = useState(false);
   const notificationGroupRef = useRef(null);
 
-    const openProfileModal = async () => {
+  const openProfileModal = async () => {
     setIsProfileModalOpen(true);
     if (!profileData) { // Fetch only if data is not already loaded
       setLoadingProfile(true);
@@ -42,7 +42,7 @@ const Headbar = () => {
 
   const getInitials = (name) => {
     if (!name) return '';
-        return name
+    return name
       .split(' ')
       .filter(Boolean)
       .map(n => n[0].toUpperCase())
@@ -147,64 +147,68 @@ const Headbar = () => {
   return (
     <>
       <header className="headbar">
-      <div className="headbar-title">Biyashara</div>
-      <div className="actions-user">
-        {/* Notifications */}
-        <div className="headbar-notification-group" ref={notificationGroupRef}>
-          {(user?.role === 'client') && (
-            <button className='shop-cart' onClick={openCartModal}>
-              <FiShoppingCart className="headbar-cart" title="Panier" />
-              {cartItemCount > 0 && <span className='cart-badge'>{cartItemCount}</span>}
-            </button>
-          )}
-          <button className="notification-btn" onClick={() => setIsNotificationOpen((o) => !o)}>
-            <FiBell className="headbar-bell" title="Notifications" />
-            {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
-          </button>
-          {isNotificationOpen && 
-            <NotificationPopup 
-              notifications={notifications.slice(0, 5)} 
-              onClose={() => setIsNotificationOpen(false)} 
-              onNotificationClick={markNotificationAsRead} 
-            />
-          }
+        <div className="headbar-left">
+          {children}
+          <div className="headbar-title">Biyashara</div>
         </div>
-        {/* Thème */}
-        {/* <FiSun className="headbar-theme" title="Changer le thème" /> */}
-        <div className="headbar-user-group" ref={dropdownRef}>
-          <button
-            className="headbar-user-dropdown-btn"
-            onClick={() => setOpen((o) => !o)}
-          >
-            {user?.nom} <span className="headbar-user-role"></span>
-            <svg className={`dropdown-arrow${open ? ' open' : ''}`} width="16" height="16" viewBox="0 0 20 20"><path d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.06l3.71-3.83a.75.75 0 1 1 1.08 1.04l-4.25 4.39a.75.75 0 0 1-1.08 0L5.21 8.27a.75.75 0 0 1 .02-1.06z" fill="currentColor"/></svg>
-          </button>
-          {open && (
-            <div className="headbar-dropdown">
-              <div className="headbar-dropdown-user">{user?.nom}</div>
-              <div className="headbar-dropdown-role">{user?.role}</div>
-              <div className="profil-user" onClick={setIsProfileModalOpen} style={{cursor: 'pointer'}} >
-                Mon profil
-              </div>
-              {/* Lien demande vendeur si role=admin */}
-              {user?.role === 'admin' && (
-                <Link to="/dashboard/admin/demandes-vendeurs" className="headbar-dropdown-link">
-                  Demandes vendeurs
-                  {pendingCount > 0 && <span className="notification-badge">{pendingCount}</span>}
-                </Link>
-              )}
-              <button className="headbar-logout headbar-dropdown-logout" onClick={handleLogout}>
-                Déconnexion
-              </button>
-            </div>
-          )}
 
-          {isProfileModalOpen && (
-            <ProfilUser onClose={() => setIsProfileModalOpen(false)} />
-          )}
+        <div className="actions-user">
+          {/* Notifications */}
+          <div className="headbar-notification-group" ref={notificationGroupRef}>
+            {(user?.role === 'client') && (
+              <button className='shop-cart' onClick={openCartModal}>
+                <FiShoppingCart className="headbar-cart" title="Panier" />
+                {cartItemCount > 0 && <span className='cart-badge'>{cartItemCount}</span>}
+              </button>
+            )}
+            <button className="notification-btn" onClick={() => setIsNotificationOpen((o) => !o)}>
+              <FiBell className="headbar-bell" title="Notifications" />
+              {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
+            </button>
+            {isNotificationOpen && 
+              <NotificationPopup 
+                notifications={notifications.slice(0, 5)} 
+                onClose={() => setIsNotificationOpen(false)} 
+                onNotificationClick={markNotificationAsRead} 
+              />
+            }
+          </div>
+          {/* Thème */}
+          {/* <FiSun className="headbar-theme" title="Changer le thème" /> */}
+          <div className="headbar-user-group" ref={dropdownRef}>
+            <button
+              className="headbar-user-dropdown-btn"
+              onClick={() => setOpen((o) => !o)}
+            >
+              {user?.nom} <span className="headbar-user-role"></span>
+              <svg className={`dropdown-arrow${open ? ' open' : ''}`} width="16" height="16" viewBox="0 0 20 20"><path d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.06l3.71-3.83a.75.75 0 1 1 1.08 1.04l-4.25 4.39a.75.75 0 0 1-1.08 0L5.21 8.27a.75.75 0 0 1 .02-1.06z" fill="currentColor"/></svg>
+            </button>
+            {open && (
+              <div className="headbar-dropdown">
+                <div className="headbar-dropdown-user">{user?.nom}</div>
+                <div className="headbar-dropdown-role">{user?.role}</div>
+                <div className="profil-user" onClick={setIsProfileModalOpen} style={{cursor: 'pointer'}} >
+                  Mon profil
+                </div>
+                {/* Lien demande vendeur si role=admin */}
+                {user?.role === 'admin' && (
+                  <Link to="/dashboard/admin/demandes-vendeurs" className="headbar-dropdown-link">
+                    Demandes vendeurs
+                    {pendingCount > 0 && <span className="notification-badge">{pendingCount}</span>}
+                  </Link>
+                )}
+                <button className="headbar-logout headbar-dropdown-logout" onClick={handleLogout}>
+                  Déconnexion
+                </button>
+              </div>
+            )}
+
+            {isProfileModalOpen && (
+              <ProfilUser onClose={() => setIsProfileModalOpen(false)} />
+            )}
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
 
     {/* Modal Panier */}
     {showCartModal && (
@@ -245,10 +249,10 @@ const Headbar = () => {
                   {loading ? (
                     <>
                       <Spinner size={15} inline={true} />
-                      <span style={{ marginLeft: '8px' }}>Paiement en cours...</span>
+                      <span style={{ marginLeft: '8px'}}>Validation...</span>
                     </>
                   ) : (
-                    'Payer la commande'
+                    'Valider'
                   )}
                 </button>
               </div>

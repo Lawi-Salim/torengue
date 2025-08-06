@@ -243,6 +243,7 @@
 /* Nouveaux styles pour le modal v2 */
 .commande-details-modal-v2 {
   max-width: 650px !important;
+  min-height: 500px !important;
 }
 
 .commande-produits-list-v2 {
@@ -539,4 +540,157 @@
   .detail-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Styles pour les clients favoris */
+.clients-favoris-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.client-favori-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.client-favori-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.client-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.client-nom {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.favori-badge {
+  background: #fef3c7;
+  color: #d97706;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.client-info {
+  margin-bottom: 1rem;
+}
+
+.client-info p {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+.client-info p strong {
+  color: #374151;
+  min-width: 80px;
+}
+
+.client-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .clients-favoris-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .client-favori-card {
+    padding: 1rem;
+  }
+  
+  .client-nom {
+    font-size: 1.1rem;
+  }
+}
+
+/* Styles pour le toggle switch */
+.form-group-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 0;
+  border-top: 1px solid #f3f4f6;
+}
+
+.form-group-toggle label {
+  margin-bottom: 0;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 28px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: var(--primary-600);
+}
+
+input:checked + .slider:before {
+  transform: translateX(22px);
 }

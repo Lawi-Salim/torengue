@@ -1,4 +1,4 @@
-const { Paiements, Commandes, Clients, Utilisateurs, Vendeurs, sequelize } = require('../models');
+const { Paiements, Commandes, Clients, Utilisateurs, Vendeurs, DetailCommandes, Produits, Factures, sequelize } = require('../models');
 
 // Fonction pour créer un paiement pour une facture/commande
 exports.createPaiementFromFacture = async (facture, commande, transaction) => {
@@ -60,6 +60,38 @@ exports.getPaiementsVendeur = async (req, res) => {
   }
 };
 
+exports.getAllPaiements = async (req, res) => {
+  try {
+    const paiements = await Paiements.findAll({
+      include: [{
+        model: Commandes,
+        as: 'commande',
+        include: [
+          {
+            model: Clients,
+            as: 'client',
+            include: [{
+              model: Utilisateurs,
+              as: 'user',
+              attributes: ['nom', 'email']
+            }]
+          },
+          {
+            model: Vendeurs,
+            as: 'vendeur',
+            attributes: ['nom_boutique']
+          }
+        ]
+      }],
+      order: [['date_paiement', 'DESC']]
+    });
+    res.json({ success: true, data: paiements });
+  } catch (error) {
+    console.error('Erreur lors de la récupération de tous les paiements:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur.' });
+  }
+};
+
 exports.getPaiementsClient = async (req, res) => {
   try {
     const client = await Clients.findOne({ where: { id_user: req.user.id_user } });
@@ -101,6 +133,50 @@ exports.getPaiementsClient = async (req, res) => {
     res.json({ success: true, data: paiements });
   } catch (error) {
     console.error('Erreur lors de la récupération des paiements client:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur.' });
+  }
+}; 
+
+exports.getPaiement = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const paiement = await Paiements.findByPk(id, {
+      include: [
+        {
+          model: Commandes,
+          as: 'commande',
+          include: [
+            {
+              model: Clients,
+              as: 'client',
+              include: [{ model: Utilisateurs, as: 'user' }]
+            },
+            {
+              model: Vendeurs,
+              as: 'vendeur',
+              include: [{ model: Utilisateurs, as: 'user' }]
+            },
+            {
+              model: DetailCommandes,
+              as: 'details',
+              include: [{ model: Produits, as: 'produit' }]
+            },
+            {
+              model: Factures,
+              as: 'facture'
+            }
+          ]
+        }
+      ]
+    });
+
+    if (!paiement) {
+      return res.status(404).json({ success: false, message: 'Paiement non trouvé.' });
+    }
+
+    res.json({ success: true, data: paiement });
+  } catch (error) {
+    console.error(`Erreur lors de la récupération du paiement ${req.params.id}:`, error);
     res.status(500).json({ success: false, message: 'Erreur serveur.' });
   }
 }; 

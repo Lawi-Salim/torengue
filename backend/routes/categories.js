@@ -7,7 +7,7 @@ const router = express.Router();
 // @desc    Récupérer toutes les catégories
 // @route   GET /api/v1/categories
 // @access  Privé (admin, vendeur)
-router.get('/', protect, authorize('admin', 'vendeur'), async (req, res) => {
+router.get('/', protect, authorize('admin', 'vendeur', 'client'), async (req, res) => {
   try {
     const categories = await Categories.findAll({
       order: [['nom', 'ASC']]

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getAllUsers, getAllUsersWithDetails, getProfile } = require('../controllers/userController');
+const { getAllUsers, getAllUsersWithDetails, getProfile, updateProfile, getRecentUsers, getPendingSellers } = require('../controllers/userController');
 const { protect, authorize } = require('../middleware/auth');
 
 // @route   GET /api/v1/users
@@ -13,9 +13,21 @@ router.get('/', protect, authorize('admin'), getAllUsers);
 // @access  Private (Admin only)
 router.get('/details', protect, authorize('admin'), getAllUsersWithDetails);
 
+// @route   GET /api/v1/users/recent
+// @desc    Récupérer les utilisateurs récents
+// @access  Private (Admin only)
+router.get('/recent', protect, authorize('admin'), getRecentUsers);
+
+// @route   GET /api/v1/users/pending-sellers
+// @desc    Récupérer les vendeurs en attente
+// @access  Private (Admin only)
+router.get('/pending-sellers', protect, authorize('admin'), getPendingSellers);
+
 // @route   GET /api/v1/users/me/profile
 // @desc    Récupérer le profil de l'utilisateur connecté
 // @access  Private
-router.get('/me/profile', protect, getProfile);
+router.route('/me/profile')
+  .get(protect, getProfile)
+  .put(protect, updateProfile);
 
 module.exports = router;

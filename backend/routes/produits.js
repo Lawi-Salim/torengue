@@ -4,57 +4,34 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const {
   getAllProduits,
-  getProduit,
   createProduit,
   updateProduit,
-  deleteProduit
+  deleteProduit,
+  getRecentProducts,
+  getProduit
 } = require('../controllers/produitsController');
 const { protect, authorize } = require('../middleware/auth');
-const { Produits, Categories, Unites, Vendeurs } = require('../models');
+const { Produits, Categories, Unites, Vendeurs, Utilisateurs } = require('../models');
 const { upload } = require('../config/cloudinary');
+const { Op } = require('sequelize');
+
+// Route pour récupérer les produits récents (Admin)
+router.get('/recent', protect, authorize('admin'), getRecentProducts);
+
+
 
 // Routes publiques
 // La route '/all' doit être déclarée AVANT la route '/:id' pour éviter que 'all' ne soit interprété comme un ID.
-router.get('/all', protect, authorize('admin', 'client'), async (req, res) => {
-  // console.log('--- [ADMIN] Appel de la route /api/v1/produits/all ---');
-  // console.log('Utilisateur authentifié:', req.user);
-  try {
-    const produits = await Produits.findAll({
-      include: [{
-        model: Vendeurs,
-        as: 'vendeur', // Correction: ajout de l'alias défini dans models/index.js
-        attributes: ['nom_boutique'],
-        required: true
-      }, {
-        model: Categories,
-        as: 'categorie',
-        attributes: ['nom'],
-        required: false // Utiliser false pour ne pas exclure les produits sans catégorie
-      }, {
-        model: Unites,
-        as: 'unite',
-        attributes: ['nom'],
-        required: false
-      }],
+router.get('/all', protect, authorize('admin', 'client', 'vendeur'), getAllProduits);
 
-      order: [['date_creation', 'DESC']] // Correction: la colonne est 'date_creation' et non 'createdAt'
-    });
-    // console.log(`Nombre de produits trouvés: ${produits.length}`);
-    res.json({ success: true, data: produits });
-  } catch (error) {
-    console.error('Erreur lors de la récupération de tous les produits:', error);
-    res.status(500).json({ success: false, message: 'Erreur serveur.' });
-  }
-});
 
-router.route('/')
-  .get(getAllProduits);
 
 router.route('/:id')
   .get(getProduit);
 
 // Endpoint pour créer un produit avec image
-router.post('/', protect, authorize('vendeur'), upload.single('image'), async (req, res) => {
+router.route('/')
+  .post(protect, authorize('vendeur'), upload.single('image'), async (req, res) => {
   try {
     console.log('=== DÉBUT CRÉATION PRODUIT ===');
     console.log('Body reçu:', req.body);
@@ -403,6 +380,26 @@ router.get('/unites/list', async (req, res) => {
     res.json({ success: true, data: unites });
   } catch (error) {
     console.error('Erreur lors de la récupération des unités:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur.' });
+  }
+});
+
+// Route publique pour afficher quelques produits sur la page d'accueil
+router.get('/public/featured', async (req, res) => {
+  try {
+    const featuredProduits = await Produits.findAll({
+      limit: 10, // On récupère 10 produits
+      order: [['date_creation', 'DESC']], // Les plus récents d'abord
+      include: [{
+        model: Vendeurs,
+        as: 'vendeur',
+        attributes: ['nom_boutique'], // On a juste besoin du nom de la boutique
+      }],
+      attributes: ['id_produit', 'nom', 'prix_unitaire', 'image', 'stock_actuel', 'seuil_critique'] // On ajoute le stock et le seuil pour le badge
+    });
+    res.json({ success: true, data: featuredProduits });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des produits vedettes:', error);
     res.status(500).json({ success: false, message: 'Erreur serveur.' });
   }
 });

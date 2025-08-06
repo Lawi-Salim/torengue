@@ -1,8 +1,11 @@
-import { FiShoppingCart, FiFileText, FiPlus, FiTrendingUp, FiPackage, FiChevronRight } from 'react-icons/fi';
+import { FiShoppingCart, FiFileText, FiTrendingUp, FiPackage, FiChevronRight } from 'react-icons/fi';
 import React, { useState, useEffect } from 'react';
 import Spinner from '../../../components/Spinner';
-import EmptyState from '../../../components/EmptyState';
+import ProduitsVenteChart from '../../../components/charts/ProduitsVenteChart';
+import ProduitsParCategorieChart from '../../../components/charts/ProduitsParCategorieChart';
 import apiService from '../../../apiService';
+import { formatNumber } from '../../../utils/formatUtils';
+import { RecentPurchasesList, FavoriteVendorsList, BestOrderList } from './activityClient/ActivityClient';
 
 const HomeClient = () => {
   const [stats, setStats] = useState([
@@ -57,18 +60,26 @@ const HomeClient = () => {
             <div key={i} className="stat-card">
               <div className={`stat-icon ${stat.color}`}><Icon className="icon-white" /></div>
               <div>
-                <div className="stat-value">{stat.value}</div>
+                <div className="stat-value">{formatNumber(stat.value)}</div>
                 <div className="stat-title">{stat.title}</div>
               </div>
             </div>
           );
         })}
       </div>
-      {/* Actions rapides */}
-      <div className="flex space-x-4">
-        <button className="btn btn-primary flex items-center space-x-2"><FiPlus /> <span>Nouvelle commande</span></button>
-        <button className="btn btn-secondary flex items-center space-x-2"><FiFileText /> <span>Voir mes factures</span></button>
+
+      <div className="dashboard-grid">
+        <ProduitsVenteChart dataType='depenses' />
+        <ProduitsParCategorieChart />
       </div>
+      
+      {/* Section des activités récentes */}
+      <div className="activity-grid" style={{ marginTop: '1.5rem' }}>
+        <RecentPurchasesList />
+        <FavoriteVendorsList />
+        <BestOrderList />
+      </div>
+      
       {/* Commandes récentes */}
       <div className="card mt-6">
         <div className="flex justify-between items-center mb-4">

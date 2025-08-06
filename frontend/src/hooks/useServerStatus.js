@@ -25,7 +25,7 @@ const useServerStatus = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        // Timeout de 3 secondes (réduit)
+        // Timeout de 3 secondes
         signal: AbortSignal.timeout(3000)
       });
 
@@ -35,20 +35,15 @@ const useServerStatus = () => {
           setIsServerOnline(true);
           setWasOffline(true);
           
-          // Rediriger automatiquement vers Login ou Home
-          const token = localStorage.getItem('token');
-          if (token) {
-            // Si l'utilisateur était connecté, aller vers le dashboard
-            const userRole = localStorage.getItem('userRole');
-            if (userRole) {
-              navigate(`/dashboard/${userRole}`);
-            } else {
-              navigate('/dashboard/admin'); // fallback
-            }
-          } else {
-            // Si pas connecté, aller vers la page d'accueil
-            navigate('/');
+          // TOUJOURS rediriger vers la page de connexion quand le serveur revient
+          // Sauvegarder le chemin de destination pour rediriger après connexion
+          const currentPath = location.pathname;
+          if (currentPath && currentPath.startsWith('/dashboard/')) {
+            sessionStorage.setItem('redirectAfterLogin', currentPath);
           }
+          
+          // Rediriger vers la page de connexion
+          navigate('/login');
         } else {
           setIsServerOnline(true);
         }
@@ -89,7 +84,7 @@ const useServerStatus = () => {
       document.addEventListener(event, updateUserActivity, true);
     });
     
-    // Vérifier le statut toutes les 30 minutes (au lieu de 5 minutes)
+    // Vérifier le statut toutes les 30 minutes (intervalle optimal)
     intervalRef.current = setInterval(checkServerStatus, 1800000);
     
     return () => {

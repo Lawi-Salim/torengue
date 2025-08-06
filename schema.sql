@@ -29,9 +29,11 @@ CREATE TABLE Utilisateurs (
     nom VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    telephone VARCHAR(20) NULL,
+    telephone VARCHAR(20) NULL UNIQUE,
     role ENUM('admin', 'vendeur', 'client') NOT NULL DEFAULT 'admin',
-    date_inscription TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    date_inscription TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    rappels_actives BOOLEAN NOT NULL DEFAULT FALSE,
+    rappel_horaire ENUM('matin', 'soir', 'nuit') NOT NULL DEFAULT 'soir'
 ) ENGINE=InnoDB;
 
 -- Table Vendeurs

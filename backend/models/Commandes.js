@@ -51,6 +51,11 @@ Commandes.associate = (models) => {
     foreignKey: 'id_vendeur',
     as: 'vendeur'
   });
+
+  Commandes.hasOne(models.Factures, {
+    foreignKey: 'id_commande',
+    as: 'facture'
+  });
 };
 
   return Commandes;

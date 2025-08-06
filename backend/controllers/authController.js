@@ -1,4 +1,5 @@
 const { Utilisateurs, Vendeurs, Clients, Notification, sequelize } = require('../models');
+const { Op } = require('sequelize');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
@@ -61,12 +62,22 @@ exports.register = async (req, res) => {
   console.log('[AUTH REGISTER] Transaction démarrée.');
 
   try {
-    // Vérifier si l'utilisateur existe déjà
-    const existingUser = await Utilisateurs.findOne({ where: { email } });
-    if (existingUser) {
+    // Vérifier si l'utilisateur existe déjà par email
+    const existingUserByEmail = await Utilisateurs.findOne({ where: { email } });
+    if (existingUserByEmail) {
       console.log(`[AUTH REGISTER] Tentative d'inscription échouée : l'email ${email} existe déjà.`);
-      await t.rollback(); // Annuler la transaction même si on n'a rien fait
+      await t.rollback();
       return res.status(409).json({ success: false, message: 'Un utilisateur avec cet email existe déjà.' });
+    }
+
+    // Vérifier si le téléphone existe déjà
+    if (telephone) {
+      const existingUserByPhone = await Utilisateurs.findOne({ where: { telephone } });
+      if (existingUserByPhone) {
+        console.log(`[AUTH REGISTER] Tentative d'inscription échouée : le téléphone ${telephone} existe déjà.`);
+        await t.rollback();
+        return res.status(409).json({ success: false, message: 'Un utilisateur avec ce numéro de téléphone existe déjà.' });
+      }
     }
 
     // Créer un nouvel utilisateur
@@ -125,7 +136,19 @@ exports.register = async (req, res) => {
   } catch (error) {
     await t.rollback();
     console.error('[AUTH REGISTER] ERREUR - Transaction annulée :', error);
-    res.status(500).json({ success: false, message: 'Erreur lors de l\'inscription.', error: error.message });
+    
+    // Gérer les erreurs de contrainte unique
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      const fields = error.errors.map(err => err.path);
+      if (fields.includes('email')) {
+        return res.status(409).json({ success: false, message: 'Un utilisateur avec cet email existe déjà.' });
+      }
+      if (fields.includes('telephone')) {
+        return res.status(409).json({ success: false, message: 'Un utilisateur avec ce numéro de téléphone existe déjà.' });
+      }
+    }
+    
+    res.status(500).json({ success: false, message: 'Erreur lors de l\'inscription.' });
   }
 };
 exports.profile = (req, res) => {
@@ -137,4 +160,45 @@ exports.profile = (req, res) => {
       user: req.user, // req.user est fourni par le middleware `protect`
     },
   });
+};
+
+/**
+ * @desc    Vérifier l'existence d'un champ (email ou téléphone)
+ * @route   POST /api/v1/auth/check-existence
+ * @access  Public
+ */
+exports.checkExistence = async (req, res) => {
+  const { field, value } = req.body;
+
+  if (!field || !value) {
+    return res.status(400).json({ success: false, message: 'Le champ et la valeur sont requis pour la vérification.' });
+  }
+
+  if (field !== 'email' && field !== 'telephone') {
+    return res.status(400).json({ success: false, message: 'La vérification est uniquement supportée pour les champs "email" et "telephone".' });
+  }
+
+  try {
+    let query = {
+      where: {}
+    };
+
+    if (field === 'telephone') {
+      // Utiliser une fonction SQL pour supprimer les espaces avant la comparaison
+      query.where = sequelize.where(
+        sequelize.fn('REPLACE', sequelize.col('telephone'), ' ', ''),
+        sequelize.fn('REPLACE', value, ' ', '')
+      );
+    } else {
+      query.where[field] = value;
+    }
+
+    const existingUser = await Utilisateurs.findOne(query);
+
+    res.status(200).json({ success: true, exists: !!existingUser });
+
+  } catch (error) {
+    console.error(`Erreur lors de la vérification du champ ${field}:`, error);
+    res.status(500).json({ success: false, message: 'Erreur serveur lors de la vérification.' });
+  }
 };

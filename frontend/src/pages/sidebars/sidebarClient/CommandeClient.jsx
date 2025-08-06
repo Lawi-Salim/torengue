@@ -5,6 +5,7 @@ import EmptyState from '../../../components/EmptyState';
 import Modal from '../../../components/Modal';
 import apiService from '../../../apiService';
 import './styleClient.css';
+import { formatNumber } from '../../../utils/formatUtils';
 
 const CommandeClient = () => {
     const [loading, setLoading] = useState(true);
@@ -84,7 +85,7 @@ const CommandeClient = () => {
                                             </span>
                                         </td>
                                         <td style={{ fontWeight: 500, color: '#10b981' }}>
-                                            {commande.montant_total ? `${Number(commande.montant_total)} kmf` : 'N/A'}
+                                            {commande.montant_total ? `${formatNumber(commande.montant_total)} kmf` : 'N/A'}
                                         </td>
                                         <td>
                                             <button 
